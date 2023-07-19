@@ -9,11 +9,12 @@ class VoiceChannel(commands.Cog):
         self.channel_number = 0
         self.bot = bot
 
-        self.queue_channels = {}
-        self.pt_roles = []
-        self.voice_channels = []
-        self.office_hours_category = None
+        self.queue_channels = {}             # 
         self.queue = {}
+
+        self.pt_roles = []           
+        self.pt_voice_channels = []     
+        self.office_hours_category = None
         
     @commands.hybrid_command(aliases=["ohvc"])
     async def create_office_hours_vc(self, ctx: Context, room_size: int=2):
@@ -38,7 +39,7 @@ class VoiceChannel(commands.Cog):
         voice_channel = await discord.Guild.create_voice_channel(ctx.guild, name=vc_name, reason=vc_reason, category=vc_cat, user_limit=room_size)
         
         # Add the voice channel to the list and add the user to the vc
-        self.voice_channels.append(voice_channel)
+        self.pt_voice_channels.append(voice_channel)
         await ctx.author.move_to(voice_channel)
         await ctx.send("Room created successfully!")
         self.channel_number += 1
@@ -52,30 +53,24 @@ class VoiceChannel(commands.Cog):
             return await ctx.send("You must be in a voice channel!")
         
         # Voice channel is not a queue channel
-        if vc.id not in self.queue:
+        if vc.id not in self.queue_channels:
             return await ctx.send(f"{ctx.author.voice.channel.name} is not a valid queue voice channel!")
         
-        # Empty queue
-        if len(self.queue[vc.id]) == 0:
-            return await ctx.send("The queue is currently empty.")
+        # Output positions (overall and channel-specific)
+        students_in_queue = list(self.queue.keys())
+        overall_position = 1 + students_in_queue.index(ctx.author)
+        channel_position = overall_position
 
-        else:
-            output = ""
-            place = -1
-            for index, member in enumerate(self.queue[vc.id], start=1):
-                output += f"{index}. {member.name}\n"
+        for i in range(overall_position):
+            student = students_in_queue[i]
+            
+            # If person in front of overall queue is not in same channel, decrememnt channel position by one
+            if self.queue[student] != self.queue[ctx.author]:
+                channel_position -= 1
 
-                # Save place if user is found in queue
-                if member.id == ctx.author.id:
-                    place = index
-                
-                # Stop once ten people are processed
-                if index == 10:
-                    break
+        await ctx.send(f"Your overall position in the queue is: {overall_position}.")
 
-            # Output
-            placement = f"\nYour current position in queue is: **{place}**."
-            await ctx.send(output + placement)
+
 
     @commands.hybrid_command()
     async def grab_next(self, ctx: Context):
@@ -92,26 +87,25 @@ class VoiceChannel(commands.Cog):
         if vc is not None and len(vc.members) == vc.user_limit:
             return await ctx.send("Your room is full!")
 
-        # Empty queue
-        for channel_id in self.queue_channels:
-            # If channel i
-            if len(self.queue) == 0:
-                return await ctx.send("The queue is empty.")
-        
-
-        await self.queue[0].move_to(vc)
+        # Check in the main queue
+        for member in self.queue:
+            if self.queue_channels[self.queue[member]] in ctx.author.roles:
+                return await self.queue[member].move_to(vc)
+            
+        # No valid students in queue
+        await ctx.send("There are no students in queue that you can help with!")
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
         """ Deletes inactive office hours voice channels and updates the queue """
 
         # Check for empty office hours voice channels
-        for index in range(len(self.voice_channels) - 1, -1, -1):
-            channel = self.voice_channels[index]
+        for index in range(len(self.pt_voice_channels) - 1, -1, -1):
+            channel = self.pt_voice_channels[index]
 
             # Empty voice channel
             if len(channel.voice_states) == 0:
-                self.voice_channels.pop(index)
+                self.pt_voice_channels.pop(index)
 
                 # Update max channel number
                 if index == self.channel_number - 1:
@@ -121,16 +115,15 @@ class VoiceChannel(commands.Cog):
 
         # Add user to the queue
         if after is not None and after.channel is not None and after.channel.id in self.queue_channels:
-            self.queue_channels[after.channel.id].append(member)
+            self.queue[member].append(after)
 
         # Remove user from the queue
         if before is not None and before.channel is not None and before.channel.id in self.queue_channels:
-            self.queue_channels[before.channel.id].remove(member)
+            del self.queue_channels[member]
 
     def add_queue_channel(self, channel_id: int, role_id: int) -> None:
         self.queue_channels[channel_id] = role_id
         self.pt_roles.append(role_id)
-        self.queue[channel_id] = []
 
     def set_category(self, category: id) -> None:
         self.office_hours_category = category

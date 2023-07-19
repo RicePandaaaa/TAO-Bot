@@ -50,11 +50,11 @@ class General(commands.Cog):
     @commands.hybrid_command(aliases=["oh"])
     async def officehours(self, ctx: Context):
         """ Basic command redirecting users to the office hours channel (for now) """
-        await ctx.send("This bot is still under developement! Please consult the <#1070134719754289194> channel" \
+        await ctx.send("This bot is still under developement! Please consult Canvas or the office hours category " \
                        " to see office hours posted by your PTs!")
         
-    @commands.hybrid_command(aliases=["chegg"])
-    async def chatgpt(self, ctx: Context):
+    @commands.hybrid_command(aliases=["chegg", "chatgpt"])
+    async def cheating(self, ctx: Context):
         """ Basic command in regards of sus study material sources """
         await ctx.send("Go consult your PTs, professor, and study materials created by yourself or on Canvas before you start consulting" \
                        " a lawyer for your upcoming AHSO meeting.")
