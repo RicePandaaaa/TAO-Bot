@@ -7,7 +7,7 @@ intents.message_content = True
 
 logging.basicConfig(level=logging.INFO)
 
-bot = commands.Bot(intents=intents, command_prefix="!")
+bot = commands.Bot(intents=intents, command_prefix="tao.")
 
 READY_CHANNEL_ID = 
 TOKEN = 
