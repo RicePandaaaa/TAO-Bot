@@ -6,15 +6,15 @@ from discord.ext.commands import Context
 class VoiceChannel(commands.Cog):
 
     def __init__(self, bot):
-        self.channel_number = 0
+        self.channel_number = 1
         self.bot = bot
 
-        self.queue_channels = {}             # 
+        self.queue_channels = {1131342483352211526: 1058138284448022689, 1131342621671956512: 1058138284448022689}             
         self.queue = {}
 
-        self.pt_roles = []           
+        self.pt_roles = [1058138284448022689]           
         self.pt_voice_channels = []     
-        self.office_hours_category = None
+        self.office_hours_category = 1131343906320154704
         
     @commands.hybrid_command(aliases=["ohvc"])
     async def create_office_hours_vc(self, ctx: Context, room_size: int=2):
@@ -35,7 +35,7 @@ class VoiceChannel(commands.Cog):
         # Create the voice channel
         vc_name = f"Office Hours {self.channel_number}"
         vc_reason = f"{ctx.author.display_name} has requested to make a voice channel."
-        vc_cat = discord.utils.get(ctx.guild.categories, id=1070134666260140032)
+        vc_cat = discord.utils.get(ctx.guild.categories, id=self.office_hours_category)
         voice_channel = await discord.Guild.create_voice_channel(ctx.guild, name=vc_name, reason=vc_reason, category=vc_cat, user_limit=room_size)
         
         # Add the voice channel to the list and add the user to the vc
@@ -58,17 +58,19 @@ class VoiceChannel(commands.Cog):
         
         # Output positions (overall and channel-specific)
         students_in_queue = list(self.queue.keys())
-        overall_position = 1 + students_in_queue.index(ctx.author)
+        overall_position = 1 + students_in_queue.index(ctx.author.id)
         channel_position = overall_position
 
         for i in range(overall_position):
             student = students_in_queue[i]
             
             # If person in front of overall queue is not in same channel, decrememnt channel position by one
-            if self.queue[student] != self.queue[ctx.author]:
+            if self.queue[student] != self.queue[ctx.author.id]:
                 channel_position -= 1
 
-        await ctx.send(f"Your overall position in the queue is: {overall_position}.")
+        # Output the results to the person
+        subject_name = vc.name[:-6]
+        await ctx.send(f"Your overall position in the queue is: {overall_position}. Your position in the queue for '{subject_name}' is: {channel_position}")
 
 
 
@@ -88,9 +90,15 @@ class VoiceChannel(commands.Cog):
             return await ctx.send("Your room is full!")
 
         # Check in the main queue
-        for member in self.queue:
-            if self.queue_channels[self.queue[member]] in ctx.author.roles:
-                return await self.queue[member].move_to(vc)
+        for member_id in self.queue:
+            pt_role_id = self.queue_channels[self.queue[member_id]]
+            pt_role = ctx.author.guild.get_role(pt_role_id)
+
+            # If the student needs help in a subject the PT can help with, pull them in
+            if pt_role in ctx.author.roles:
+                member = ctx.author.guild.get_member(member_id)
+                await member.move_to(vc)
+                await ctx.send(f"<@{member_id}> has been pulled into <#{vc.id}> led by PT <@{ctx.author.id}>")
             
         # No valid students in queue
         await ctx.send("There are no students in queue that you can help with!")
@@ -108,20 +116,22 @@ class VoiceChannel(commands.Cog):
                 self.pt_voice_channels.pop(index)
 
                 # Update max channel number
-                if index == self.channel_number - 1:
+                if index == self.channel_number - 2:
                     self.channel_number -= 1
 
+                # Remove the channel
                 await channel.delete()
-
-        # Add user to the queue
-        if after is not None and after.channel is not None and after.channel.id in self.queue_channels:
-            self.queue[member].append(after)
 
         # Remove user from the queue
         if before is not None and before.channel is not None and before.channel.id in self.queue_channels:
-            del self.queue_channels[member]
+            del self.queue[member.id]
+
+        # Add user to queue and assign user to queue channel
+        if after is not None and after.channel is not None and after.channel.id in self.queue_channels:
+            self.queue[member.id] = after.channel.id
 
     def add_queue_channel(self, channel_id: int, role_id: int) -> None:
+        """ Adds a channel as queue alongside the relevant PT role """
         self.queue_channels[channel_id] = role_id
         self.pt_roles.append(role_id)
 
@@ -129,6 +139,7 @@ class VoiceChannel(commands.Cog):
         self.office_hours_category = category
 
     def is_pt(self, roles) -> bool:
+        """ Checks if the person has any roles for PT """
         for role in roles:
             if role.id in self.pt_roles:
                 return True
