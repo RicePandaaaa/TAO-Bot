@@ -45,7 +45,7 @@ class General(commands.Cog):
         """ Basic command for obtaining info about the bot """
         await ctx.send("Howdy, I was created to assist PTs and professors in managing voice channels for one-on-one " \
                         "sessions for students and content reviews. I can also provide students with information " \
-                        "related to office hours! Please type `!help` for a complete command list!")
+                        "related to office hours! Please type `tao.help` for a complete command list!")
 
     @commands.hybrid_command(aliases=["oh"])
     async def officehours(self, ctx: Context):
@@ -56,11 +56,10 @@ class General(commands.Cog):
     @commands.hybrid_command(aliases=["chegg", "chatgpt"])
     async def cheating(self, ctx: Context):
         """ Basic command in regards of sus study material sources """
-        await ctx.send("Go consult your PTs, professor, and study materials created by yourself or on Canvas before you start consulting" \
-                       " a lawyer for your upcoming AHSO meeting.")
+        await ctx.send("Please do not use outside resources such as Chegg and ChatGPT to do your assignments!")
         
     @commands.hybrid_command()
-    @commands.has_any_role('Panda Overlord')
+    @commands.has_any_role('Mod')
     async def addqueuechannel(self, ctx: Context, channel: str, role: str):
         """ Adds a queue channel associated with a certain role (subject) """
 
@@ -84,7 +83,7 @@ class General(commands.Cog):
         await ctx.send(f'You have set the "{voice_channel.name}" voice channel as a queue channel. Those with the "{subject_role}" role will be able to pull students from that channel into their office hours channel.')
 
     @commands.hybrid_command()
-    @commands.has_any_role("Panda Overlord")
+    @commands.has_any_role("Mod")
     async def setcategory(self, ctx: Context, category_str: str):
         """ Sets the category to put the office hours channels in """
 
@@ -100,6 +99,16 @@ class General(commands.Cog):
 
         # Confirm to the user
         await ctx.send(f'You have set the "{category.name}" category to be where office hours voice channels will be created.')
+
+    @commands.hybrid_command()
+    async def joinvc(self, ctx: Context) -> None:
+        await ctx.author.voice.channel.connect()
+        await ctx.send(f"Successfully joined, <#{ctx.author.voice.channel.id}>!")
+
+    @commands.hybrid_command()
+    async def leavevc(self, ctx: Context) -> None:
+        await ctx.voice_client.disconnect()
+        await ctx.send(f"Successfully left the voice channel!")
 
 async def setup(bot):
     await bot.add_cog(General(bot))
