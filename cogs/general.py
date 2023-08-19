@@ -59,7 +59,7 @@ class General(commands.Cog):
         await ctx.send("Please do not use outside resources such as Chegg and ChatGPT to do your assignments!")
         
     @commands.hybrid_command()
-    @commands.has_any_role('Mod')
+    @commands.has_any_role('TAO Officer')
     async def addqueuechannel(self, ctx: Context, channel: str, role: str):
         """ Adds a queue channel associated with a certain role (subject) """
 
@@ -83,7 +83,7 @@ class General(commands.Cog):
         await ctx.send(f'You have set the "{voice_channel.name}" voice channel as a queue channel. Those with the "{subject_role}" role will be able to pull students from that channel into their office hours channel.')
 
     @commands.hybrid_command()
-    @commands.has_any_role("Mod")
+    @commands.has_any_role('TAO Officer')
     async def setcategory(self, ctx: Context, category_str: str):
         """ Sets the category to put the office hours channels in """
 
@@ -101,11 +101,13 @@ class General(commands.Cog):
         await ctx.send(f'You have set the "{category.name}" category to be where office hours voice channels will be created.')
 
     @commands.hybrid_command()
+    @commands.has_any_role('TAO Officer')
     async def joinvc(self, ctx: Context) -> None:
         await ctx.author.voice.channel.connect()
         await ctx.send(f"Successfully joined, <#{ctx.author.voice.channel.id}>!")
 
     @commands.hybrid_command()
+    @commands.has_any_role('TAO Officer')
     async def leavevc(self, ctx: Context) -> None:
         await ctx.voice_client.disconnect()
         await ctx.send(f"Successfully left the voice channel!")
