@@ -17,6 +17,7 @@ class VoiceChannel(commands.Cog):
         self.office_hours_category = 1131343906320154704
         
     @commands.hybrid_command(aliases=["ohvc"])
+    @commands.has_any_role("Current PT")
     async def create_office_hours_vc(self, ctx: Context, room_size: int=2):
         """ Creates a voice channel for office hours """
 
@@ -75,6 +76,7 @@ class VoiceChannel(commands.Cog):
 
 
     @commands.hybrid_command()
+    @commands.has_any_role("Current PT")
     async def grab_next(self, ctx: Context):
         """ Moves the next person in the queue to the user's current voice channel """
 
