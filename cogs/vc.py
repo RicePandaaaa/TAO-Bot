@@ -9,10 +9,14 @@ class VoiceChannel(commands.Cog):
         self.channel_number = 1
         self.bot = bot
 
-        self.queue_channels = {1131342483352211526: 1058138284448022689, 1131342621671956512: 1058138284448022689}             
+        self.queue_channels = {1131342483352211526: 1142822139506983043, 
+                               1131342621671956512: 1142822128438235146,
+                               1131342752743948438: 1142821958925426749,
+                               1133390683554713664: 1142822132942913597,
+                               1133390590613131404: 1142822135568547892}             
         self.queue = {}
 
-        self.pt_roles = [1058138284448022689]           
+        self.pt_roles = [1142822139506983043, 1142822128438235146, 1142822128438235146, 1142822132942913597, 1142822135568547892]           
         self.pt_voice_channels = []     
         self.office_hours_category = 1131343906320154704
         
@@ -104,6 +108,17 @@ class VoiceChannel(commands.Cog):
             
         # No valid students in queue
         await ctx.send("There are no students in queue that you can help with!")
+
+    @commands.hybrid_command()
+    @commands.has_any_role('TAO Officer')
+    async def remove_queue(self, ctx: Context, channel_id: str) -> None:
+        """ Removes a voice channel from the list of queues """
+        # Check if the channel even is a queue channel
+        if int(channel_id) not in self.queue_channels.keys():
+            return await ctx.send(f"The channel with id \"{channel_id}\" is not a queue voice channel!")
+    
+        del self.queue_channels[int(channel_id)]
+        await ctx.send(f"The channel with id \"{channel_id}\" has been removed!")
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
