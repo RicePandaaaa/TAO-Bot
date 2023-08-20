@@ -63,6 +63,7 @@ class Roles(commands.Cog):
             await ctx.send(f"The role for Professor {prof_name} already exists!")
         
         else:
+            await ctx.guild.create_role(name=prof_name)
             await ctx.send(f"The role for Professor {prof_name} is now created.")
 
     @commands.Cog.listener()
