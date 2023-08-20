@@ -9,8 +9,9 @@ logging.basicConfig(level=logging.INFO)
 
 bot = commands.Bot(intents=intents, command_prefix="tao.")
 
-READY_CHANNEL_ID = 
-TOKEN = 
+
+READY_CHANNEL_ID = int(os.environ['READY_CHANNEL_ID'])
+TOKEN = str(os.environ['TOKEN'])
 
 """
 Just a cute message to let me know the bot is on/
@@ -19,7 +20,7 @@ Just a cute message to let me know the bot is on/
 async def on_ready():
     channel = bot.get_channel(READY_CHANNEL_ID)
 
-    await channel.send("Hey Tony, I'm all ready to go! o7")
+    await channel.send("Howdy Anthony! The bot is ready to go!")
 
 """
 Load the bot with cogs
