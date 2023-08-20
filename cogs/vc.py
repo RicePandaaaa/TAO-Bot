@@ -23,7 +23,11 @@ class VoiceChannel(commands.Cog):
     @commands.hybrid_command(aliases=["ohvc"])
     @commands.has_any_role("Current PT")
     async def create_office_hours_vc(self, ctx: Context, room_size: int=2) -> None:
-        """ Creates a voice channel for office hours """
+        """ 
+        Creates a voice channel for office hours 
+        
+        :param int room_size: The maximum number of users allowed in a room (defaults to 2)
+        """
 
         # Checks if the user is a valid PT
         if not self.is_pt(ctx.author.roles):
@@ -112,7 +116,11 @@ class VoiceChannel(commands.Cog):
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
     async def remove_queue(self, ctx: Context, channel_id: str) -> None:
-        """ Removes a voice channel from the list of queues """
+        """ 
+        Removes a voice channel from the list of queues 
+        
+        :param str channel_id: The channel ID of the voice channel to be removed
+        """
         # Check if the channel even is a queue channel
         if int(channel_id) not in self.queue_channels.keys():
             return await ctx.send(f"The channel with id \"{channel_id}\" is not a queue voice channel!")
@@ -148,15 +156,27 @@ class VoiceChannel(commands.Cog):
             self.queue[member.id] = after.channel.id
 
     def add_queue_channel(self, channel_id: int, role_id: int) -> None:
-        """ Adds a channel as queue alongside the relevant PT role """
+        """ 
+        Adds a channel as queue alongside the relevant PT role 
+        
+        :param int channel_id: The channel ID of the voice channel to be added
+        :param int role_id: The role ID of the associated role
+        """
+
         self.queue_channels[channel_id] = role_id
         self.pt_roles.append(role_id)
 
     def set_category(self, category: id) -> None:
+        """ Sets the ID of the category to include office hours channels"""
+
         self.office_hours_category = category
 
-    def is_pt(self, roles) -> bool:
-        """ Checks if the person has any roles for PT """
+    def is_pt(self, roles: list[discord.Role]) -> bool:
+        """ 
+        Checks if the person has any roles for PT 
+        
+        :param list[discord.Role] roles: The list of user roles to check"""
+        
         for role in roles:
             if role.id in self.pt_roles:
                 return True
