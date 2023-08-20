@@ -1,4 +1,4 @@
-import asyncio, os, discord, logging, dotenv
+import asyncio, os, discord, logging
 from discord.ext import commands
 
 intents = discord.Intents.default()
@@ -8,10 +8,9 @@ intents.message_content = True
 logging.basicConfig(level=logging.INFO)
 
 bot = commands.Bot(intents=intents, command_prefix="tao.", activity=discord.Game(name="tao.help"))
-dotenv.load_dotenv(dotenv_path="bot.env")
 
-READY_CHANNEL_ID = int(os.getenv('READY_CHANNEL_ID'))
-TOKEN = str(os.getenv('TOKEN'))
+READY_CHANNEL_ID = int(os.environ['READY_CHANNEL_ID'])
+TOKEN = str(os.environ['TOKEN'])
 
 """
 Just a cute message to let me know the bot is on/
