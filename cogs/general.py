@@ -16,10 +16,7 @@ class General(commands.Cog):
                    guilds: Greedy[discord.Object] = commands.parameter(default=None, description="A list of guilds to go through"), 
                    spec: typing.Optional[typing.Literal["~", "*", "^"]] = commands.parameter(default=None, description="Type of sync to be performed")) -> None:
         """ 
-        Syncs the hybrid commands (allows for usage of slash commands), from discord.py server 
-        
-        :param guilds: A list of guilds to go through
-        :param spec: Type of sync to be performed   
+        Syncs the hybrid commands (allows for usage of slash commands), from discord.py server  
         """
         if not guilds:
             if spec == "~":
@@ -91,12 +88,11 @@ class General(commands.Cog):
         
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
-    async def addqueuechannel(self, ctx: Context, channel: str, role: str) -> None:
+    async def addqueuechannel(self, ctx: Context, 
+                              channel: str = commands.parameter(default="The channel ID of the voice channel to be added"), 
+                              role: str = commands.parameter(default="The role ID of the role to be added")) -> None:
         """ 
         Adds a queue channel associated with a certain role (subject) 
-        
-        :param str channel: The channel ID of the voice channel to be added
-        :param str role: The role ID of the associated PT role
         """
 
         channel_id, role_id = int(channel), int(role)
@@ -124,8 +120,6 @@ class General(commands.Cog):
                           category_str: str = commands.parameter(description="The category ID where all the office hours channels will be created.")) -> None:
         """ 
         Sets the category to put the office hours channels in 
-        
-        :param str category_str: The category ID where all the office hours channels will be created.
         """
 
         category_id = int(category_str)
@@ -159,11 +153,10 @@ class General(commands.Cog):
 
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
-    async def setofficehours(self, ctx: Context, link: str) -> None:
+    async def setofficehours(self, ctx: Context, 
+                             link: str = commands.parameter(description="Link to the office hours spreadsheet")) -> None:
         """ 
         Sets the office hours link 
-        
-        :param str link: The link to the office hours spreadsheet
         """
 
         self.office_hours = link
