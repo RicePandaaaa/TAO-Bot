@@ -18,7 +18,7 @@ class VoiceChannel(commands.Cog):
         
     @commands.hybrid_command(aliases=["ohvc"])
     @commands.has_any_role("Current PT")
-    async def create_office_hours_vc(self, ctx: Context, room_size: int=2):
+    async def create_office_hours_vc(self, ctx: Context, room_size: int=2) -> None:
         """ Creates a voice channel for office hours """
 
         # Checks if the user is a valid PT
@@ -46,7 +46,7 @@ class VoiceChannel(commands.Cog):
         self.channel_number += 1
 
     @commands.hybrid_command(aliases=["cq", "queue"])
-    async def check_queue(self, ctx: Context):
+    async def check_queue(self, ctx: Context) -> None:
         """ Outputs the first ten people in queue and the user's current position, if in queue """
 
         vc = ctx.author.voice.channel
@@ -77,7 +77,7 @@ class VoiceChannel(commands.Cog):
 
     @commands.hybrid_command()
     @commands.has_any_role("Current PT")
-    async def grab_next(self, ctx: Context):
+    async def grab_next(self, ctx: Context) -> None:
         """ Moves the next person in the queue to the user's current voice channel """
 
         # Checks if the user is a valid PT

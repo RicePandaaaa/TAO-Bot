@@ -1,6 +1,6 @@
-import discord, typing, csv, emoji
+import discord
 from discord.ext import commands
-from discord.ext.commands import Context, Greedy
+from discord.ext.commands import Context
 
 
 class Roles(commands.Cog):
@@ -36,7 +36,7 @@ class Roles(commands.Cog):
 
         # Already existing professor
         if professor in prof_info.keys():
-            return await ctx.send(f"{professor} already exists for this class!")
+            return await ctx.send(f"Professor {professor} already exists for this class!")
         
         # Already existing emoji
         if reaction in prof_info.values():
@@ -102,10 +102,6 @@ class Roles(commands.Cog):
                 return True
             
         return False
-                
-
-        
-
 
 
 async def setup(bot):

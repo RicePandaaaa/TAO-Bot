@@ -7,10 +7,12 @@ class General(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.office_hours = "\"DOES NOT EXIST YET\""
 
-    @commands.command()
+    @commands.hybrid_command()
     @commands.guild_only()
-    async def sync(self, ctx: Context, guilds: Greedy[discord.Object], spec: typing.Optional[typing.Literal["~", "*", "^"]] = None) -> None:
+    @commands.has_any_role('TAO Officer')
+    async def sync(self, ctx: Context, guilds: Greedy[discord.Object] = None, spec: typing.Optional[typing.Literal["~", "*", "^"]] = None) -> None:
         if not guilds:
             if spec == "~":
                 synced = await ctx.bot.tree.sync(guild=ctx.guild)
@@ -41,17 +43,16 @@ class General(commands.Cog):
         await ctx.send(f"Synced the tree to {ret}/{len(guilds)}.")
 
     @commands.hybrid_command()
-    async def howdy(self, ctx: Context):
+    async def howdy(self, ctx: Context) -> None:
         """ Basic command for obtaining info about the bot """
         await ctx.send("Howdy, I was created to assist PTs and professors in managing voice channels for one-on-one " \
                         "sessions for students and content reviews. I can also provide students with information " \
                         "related to office hours! Please type `tao.help` for a complete command list!")
 
     @commands.hybrid_command(aliases=["oh"])
-    async def officehours(self, ctx: Context):
+    async def officehours(self, ctx: Context) -> None:
         """ Basic command redirecting users to the office hours channel (for now) """
-        await ctx.send("This bot is still under developement! Please consult Canvas or the office hours category " \
-                       " to see office hours posted by your PTs!")
+        await ctx.send(f"If there is a link to the office hours times, it will be shown here: {self.office_hours}")
         
     @commands.hybrid_command(aliases=["chegg", "chatgpt"])
     async def cheating(self, ctx: Context):
@@ -60,7 +61,7 @@ class General(commands.Cog):
         
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
-    async def addqueuechannel(self, ctx: Context, channel: str, role: str):
+    async def addqueuechannel(self, ctx: Context, channel: str, role: str) -> None:
         """ Adds a queue channel associated with a certain role (subject) """
 
         channel_id, role_id = int(channel), int(role)
@@ -84,7 +85,7 @@ class General(commands.Cog):
 
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
-    async def setcategory(self, ctx: Context, category_str: str):
+    async def setcategory(self, ctx: Context, category_str: str) -> None:
         """ Sets the category to put the office hours channels in """
 
         category_id = int(category_str)
@@ -103,14 +104,22 @@ class General(commands.Cog):
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
     async def joinvc(self, ctx: Context) -> None:
+        """ Forces the bot to enter the voice channel in which the user is currently in """
         await ctx.author.voice.channel.connect()
         await ctx.send(f"Successfully joined, <#{ctx.author.voice.channel.id}>!")
 
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
     async def leavevc(self, ctx: Context) -> None:
+        """ Forces the bot to gracefully leave the voice channel """
         await ctx.voice_client.disconnect()
         await ctx.send(f"Successfully left the voice channel!")
+
+    @commands.hybrid_command()
+    @commands.has_any_role('TAO Officer')
+    async def setofficehours(self, ctx: Context, link: str) -> None:
+        """ Sets the office hours link """
+        self.office_hours = link
 
 async def setup(bot):
     await bot.add_cog(General(bot))
