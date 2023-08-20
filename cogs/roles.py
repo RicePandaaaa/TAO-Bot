@@ -14,7 +14,13 @@ class Roles(commands.Cog):
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
     async def send_student_role_prompt(self, ctx: Context, prompt: str, class_name: str, class_role: discord.Role = None) -> None:
-        """ Sends a bot message with a user provided prompt internally tied to class_name and class_role """
+        """ 
+        Sends a bot message with a user provided prompt internally tied to class_name and class_role 
+        
+        :param str prompt: The exact prompt the bot will send
+        :param str class_name: The name of the class (for internal linking reasons)
+        :param discord.Role class_role: The role that students of this class will receive
+        """
 
         # Class name already in use
         if class_name in self.student_info.keys():
@@ -26,7 +32,15 @@ class Roles(commands.Cog):
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
     async def add_professor(self, ctx: Context, class_name: str, professor: str, reaction: str, role: discord.Role) -> None:
-        """ Adds a professor to a pre-existing class prompt along with an internally connected role """
+        """ 
+        Adds a professor to a pre-existing class prompt along with an internally connected role 
+        
+        :param str class_name: The internal name of the class
+        :param str professor: The name of the professor
+        :param str reaction: The emoji used for the reaction
+        :param discord.Role role: The role in which students of this professor will receive
+        """
+
         # Not an existing class
         if class_name not in self.student_info.keys():
             return await ctx.send(f"\"{class_name}\" does not exist as a class! Please use the `send_student_role_prompt` command to add the prompt!")
@@ -58,6 +72,12 @@ class Roles(commands.Cog):
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
     async def add_prof_role(self, ctx: Context, prof_name: str) -> None:
+        """ 
+        Attempts to add a role given the name 
+        
+        :param str prof_name: Name of the professor to be used for the role
+        """
+
         # Check if role exists
         if discord.utils.get(ctx.guild.roles, name=prof_name):
             await ctx.send(f"The role for Professor {prof_name} already exists!")
@@ -68,6 +88,7 @@ class Roles(commands.Cog):
 
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction: discord.Reaction, user: discord.User) -> None :
+        """ Assigns roles to users based on reactions to certain messages """
         # Check the message reacted to against specific messages that are being monitored
         for class_name in self.student_info.keys():
             class_info = self.student_info[class_name]
@@ -91,7 +112,14 @@ class Roles(commands.Cog):
                 await user.add_roles(prof_role_to_add)
 
     def has_duplicate_roles(self, class_role: discord.Role, prof_role: discord.Role, user: discord.User) -> bool:
-        """ Checks if the user already has either the class or the professor roles to prevent duplicates """
+        """ 
+        Checks if the user already has either the class or the professor roles to prevent duplicates 
+        
+        :param discord.Role class_role: The role associated with the entire class
+        :param discord.Role prof_role: The role associated with the professor
+        :param discord.User user: The user whose roles are being checked
+        """
+
         if class_role is not None and class_role in user.roles:
             return True
         
@@ -101,7 +129,12 @@ class Roles(commands.Cog):
         return False
     
     def has_conflicting_roles(self, class_role: discord.Role, user: discord.User) -> bool:
-        """ Checks if the user has roles considered to be pre-requisites"""
+        """ 
+        Checks if the user has roles considered to be pre-requisites
+
+        :param discord.Role class_role: The role associated with the entire class
+        :param discord.User user: The user whose roles are being checked
+        """
         # Only applies to PHYS roles, don't check otherwise
         if "PHYS" not in class_role.name:
             return False
