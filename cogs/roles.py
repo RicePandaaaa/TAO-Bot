@@ -25,7 +25,7 @@ class Roles(commands.Cog):
 
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
-    async def add_professor(self, ctx: Context, class_name: str, professor: str, reaction: str, role: discord.Role):
+    async def add_professor(self, ctx: Context, class_name: str, professor: str, reaction: str, role: discord.Role) -> None:
         """ Adds a professor to a pre-existing class prompt along with an internally connected role """
         # Not an existing class
         if class_name not in self.student_info.keys():
@@ -54,6 +54,16 @@ class Roles(commands.Cog):
         # Send a message and delete
         bot_message = await ctx.send("Done.")
         await bot_message.delete()
+
+    @commands.hybrid_command()
+    @commands.has_any_role('TAO Officer')
+    async def add_prof_role(self, ctx: Context, prof_name: str) -> None:
+        # Check if role exists
+        if discord.utils.get(ctx.guild.roles, name=prof_name):
+            await ctx.send(f"The role for Professor {prof_name} already exists!")
+        
+        else:
+            await ctx.send(f"The role for Professor {prof_name} is now created.")
 
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction: discord.Reaction, user: discord.User) -> None :
