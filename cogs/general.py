@@ -12,7 +12,9 @@ class General(commands.Cog):
     @commands.hybrid_command()
     @commands.guild_only()
     @commands.has_any_role('TAO Officer')
-    async def sync(self, ctx: Context, guilds: Greedy[discord.Object] = None, spec: typing.Optional[typing.Literal["~", "*", "^"]] = None) -> None:
+    async def sync(self, ctx: Context, 
+                   guilds: Greedy[discord.Object] = commands.parameter(default=None, description="A list of guilds to go through"), 
+                   spec: typing.Optional[typing.Literal["~", "*", "^"]] = commands.parameter(default=None, description="Type of sync to be performed")) -> None:
         """ 
         Syncs the hybrid commands (allows for usage of slash commands), from discord.py server 
         
@@ -118,7 +120,8 @@ class General(commands.Cog):
 
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
-    async def setcategory(self, ctx: Context, category_str: str) -> None:
+    async def setcategory(self, ctx: Context, 
+                          category_str: str = commands.parameter(description="The category ID where all the office hours channels will be created.")) -> None:
         """ 
         Sets the category to put the office hours channels in 
         
