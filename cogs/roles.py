@@ -13,13 +13,12 @@ class Roles(commands.Cog):
 
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
-    async def send_student_role_prompt(self, ctx: Context, prompt: str, class_name: str, class_role: discord.Role = None) -> None:
+    async def send_student_role_prompt(self, ctx: Context, 
+                                       prompt: str = commands.parameter(description="The exact prompt the bot will send"), 
+                                       class_name: str = commands.parameter(description="The name of the class (for internal linking reasons)"), 
+                                       class_role: discord.Role = commands.parameter(default=None, description="The role that students of this class will receive")) -> None:
         """ 
         Sends a bot message with a user provided prompt internally tied to class_name and class_role 
-        
-        :param str prompt: The exact prompt the bot will send
-        :param str class_name: The name of the class (for internal linking reasons)
-        :param discord.Role class_role: The role that students of this class will receive
         """
 
         # Class name already in use
@@ -31,14 +30,13 @@ class Roles(commands.Cog):
 
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
-    async def add_professor(self, ctx: Context, class_name: str, professor: str, reaction: str, role: discord.Role) -> None:
+    async def add_professor(self, ctx: Context, 
+                            class_name: str = commands.parameter(description="The internal name of the class"), 
+                            professor: str = commands.parameter(description="The name of the professor"), 
+                            reaction: str = commands.parameter(description="The emoji used for the reaction"), 
+                            role: discord.Role = commands.parameter(description="The role in which students of this professor will receive")) -> None:
         """ 
         Adds a professor to a pre-existing class prompt along with an internally connected role 
-        
-        :param str class_name: The internal name of the class
-        :param str professor: The name of the professor
-        :param str reaction: The emoji used for the reaction
-        :param discord.Role role: The role in which students of this professor will receive
         """
 
         # Not an existing class
@@ -71,11 +69,10 @@ class Roles(commands.Cog):
 
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
-    async def add_prof_role(self, ctx: Context, prof_name: str) -> None:
+    async def add_prof_role(self, ctx: Context, 
+                            prof_name: str = commands.parameter(default="Name of the professor to be used for the role")) -> None:
         """ 
         Attempts to add a role given the name 
-        
-        :param str prof_name: Name of the professor to be used for the role
         """
 
         # Check if role exists
