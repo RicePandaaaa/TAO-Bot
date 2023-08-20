@@ -13,6 +13,12 @@ class General(commands.Cog):
     @commands.guild_only()
     @commands.has_any_role('TAO Officer')
     async def sync(self, ctx: Context, guilds: Greedy[discord.Object] = None, spec: typing.Optional[typing.Literal["~", "*", "^"]] = None) -> None:
+        """ 
+        Syncs the hybrid commands (allows for usage of slash commands), from discord.py server 
+        
+        :param guilds: A list of guilds to go through
+        :param spec: Type of sync to be performed   
+        """
         if not guilds:
             if spec == "~":
                 synced = await ctx.bot.tree.sync(guild=ctx.guild)
@@ -44,6 +50,7 @@ class General(commands.Cog):
     @commands.hybrid_command()
     async def howdy(self, ctx: Context) -> None:
         """ Basic command for obtaining info about the bot """
+        
         await ctx.send("Howdy, I was created to assist PTs and professors in managing voice channels for one-on-one " \
                         "sessions for students and content reviews. I can also provide students with information " \
                         "related to office hours! Please type `tao.help` for a complete command list!")
@@ -51,11 +58,13 @@ class General(commands.Cog):
     @commands.hybrid_command(aliases=["oh"])
     async def officehours(self, ctx: Context) -> None:
         """ Basic command redirecting users to the office hours channel (for now) """
+
         await ctx.send(f"If there is a link to the office hours times, it will be shown here: {self.office_hours}")
         
     @commands.hybrid_command()
     async def cheating(self, ctx: Context) -> None:
         """ Basic command in regards of sus study material sources """
+
         await ctx.send("Please do not use outside resources such as Chegg and ChatGPT to do your assignments!" \
                        " Also, if you are helping others, do be aware to not share your solutions or to share or say anything" \
                         " that may break the Aggie Honor Code and any rules set by your professor.")
@@ -63,6 +72,7 @@ class General(commands.Cog):
     @commands.hybrid_command()
     async def explain(self, ctx: Context) -> None:
         """ Basic command in case the question is asked is very vague """
+
         formatting_link = "https://support.discord.com/hc/en-us/articles/210298617-Markdown-Text-101-Chat-Formatting-Bold-Italic-Underline-"
         await ctx.send(f"{ctx.author.display_name} wants to help you, but it seems that your question is rather unclear." \
                        f" For coding questions, please consult <{formatting_link}> to properly show code snippets, but DO NOT SHARE CODE USED IN YOUR SUBMITTED ASSIGNMENTS." \
@@ -72,14 +82,20 @@ class General(commands.Cog):
     @commands.hybrid_command()
     async def code(self, ctx: Context) -> None:
         """ Basic command warning users against posting code for their HW or other assignments """
-        await ctx.send("DO NOT SHARE ANY PART OF YOUR CODE THAT IS USED IN YOUR SUBMITTED ASSIGNMENTS." \
-                       "You can only share code that was created for purposes unrelated to your assignments." \
+
+        await ctx.send("**DO NOT SHARE ANY PART OF YOUR CODE THAT IS USED IN YOUR SUBMITTED ASSIGNMENTS.**" \
+                       " You can only share code that was created for purposes unrelated to your assignments." \
                         " Posting your code used in assignments (such as labs and HW) can and will lead to severe consequences.")
         
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
     async def addqueuechannel(self, ctx: Context, channel: str, role: str) -> None:
-        """ Adds a queue channel associated with a certain role (subject) """
+        """ 
+        Adds a queue channel associated with a certain role (subject) 
+        
+        :param str channel: The channel ID of the voice channel to be added
+        :param str role: The role ID of the associated PT role
+        """
 
         channel_id, role_id = int(channel), int(role)
 
@@ -103,7 +119,11 @@ class General(commands.Cog):
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
     async def setcategory(self, ctx: Context, category_str: str) -> None:
-        """ Sets the category to put the office hours channels in """
+        """ 
+        Sets the category to put the office hours channels in 
+        
+        :param str category_str: The category ID where all the office hours channels will be created.
+        """
 
         category_id = int(category_str)
 
@@ -122,6 +142,7 @@ class General(commands.Cog):
     @commands.has_any_role('TAO Officer')
     async def joinvc(self, ctx: Context) -> None:
         """ Forces the bot to enter the voice channel in which the user is currently in """
+
         await ctx.author.voice.channel.connect()
         await ctx.send(f"Successfully joined, <#{ctx.author.voice.channel.id}>!")
 
@@ -129,13 +150,19 @@ class General(commands.Cog):
     @commands.has_any_role('TAO Officer')
     async def leavevc(self, ctx: Context) -> None:
         """ Forces the bot to gracefully leave the voice channel """
+        
         await ctx.voice_client.disconnect()
         await ctx.send(f"Successfully left the voice channel!")
 
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
     async def setofficehours(self, ctx: Context, link: str) -> None:
-        """ Sets the office hours link """
+        """ 
+        Sets the office hours link 
+        
+        :param str link: The link to the office hours spreadsheet
+        """
+
         self.office_hours = link
 
 async def setup(bot):
