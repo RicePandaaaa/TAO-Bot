@@ -89,8 +89,8 @@ class General(commands.Cog):
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
     async def addqueuechannel(self, ctx: Context, 
-                              channel: str = commands.parameter(default="The channel ID of the voice channel to be added"), 
-                              role: str = commands.parameter(default="The role ID of the role to be added")) -> None:
+                              channel: str = commands.parameter(description="The channel ID of the voice channel to be added"), 
+                              role: str = commands.parameter(description="The role ID of the role to be added")) -> None:
         """ 
         Adds a queue channel associated with a certain role (subject) 
         """

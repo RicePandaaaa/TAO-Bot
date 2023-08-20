@@ -22,11 +22,10 @@ class VoiceChannel(commands.Cog):
         
     @commands.hybrid_command(aliases=["ohvc"])
     @commands.has_any_role("Current PT")
-    async def create_office_hours_vc(self, ctx: Context, room_size: int=2) -> None:
+    async def create_office_hours_vc(self, ctx: Context, 
+                                     room_size: int = commands.parameter(default=2, description="The maximum number of users allowed in a room")) -> None:
         """ 
         Creates a voice channel for office hours 
-        
-        :param int room_size: The maximum number of users allowed in a room (defaults to 2)
         """
 
         # Checks if the user is a valid PT
@@ -115,11 +114,10 @@ class VoiceChannel(commands.Cog):
 
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
-    async def remove_queue(self, ctx: Context, channel_id: str) -> None:
+    async def remove_queue(self, ctx: Context, 
+                           channel_id: str = commands.parameter(description="The channel ID of the voice channel to be added")) -> None:
         """ 
         Removes a voice channel from the list of queues 
-        
-        :param str channel_id: The channel ID of the voice channel to be removed
         """
         # Check if the channel even is a queue channel
         if int(channel_id) not in self.queue_channels.keys():
@@ -176,7 +174,7 @@ class VoiceChannel(commands.Cog):
         Checks if the person has any roles for PT 
         
         :param list[discord.Role] roles: The list of user roles to check"""
-        
+
         for role in roles:
             if role.id in self.pt_roles:
                 return True

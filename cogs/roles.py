@@ -70,7 +70,7 @@ class Roles(commands.Cog):
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
     async def add_prof_role(self, ctx: Context, 
-                            prof_name: str = commands.parameter(default="Name of the professor to be used for the role")) -> None:
+                            prof_name: str = commands.parameter(description="Name of the professor to be used for the role")) -> None:
         """ 
         Attempts to add a role given the name 
         """
