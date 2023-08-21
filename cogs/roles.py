@@ -111,7 +111,7 @@ class Roles(commands.Cog):
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
     async def remove_class(self, ctx: Context, 
-                           class_name: str = commands.parameter("Name of the class to be removed")) -> None:
+                           class_name: str = commands.parameter(description="Name of the class to be removed")) -> None:
         """ Removes a class from the student info """
         
         # Check if the class exists
