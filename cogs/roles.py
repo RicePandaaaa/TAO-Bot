@@ -1,4 +1,4 @@
-import discord
+import discord, csv
 from discord.ext import commands
 from discord.ext.commands import Context
 
@@ -110,6 +110,24 @@ class Roles(commands.Cog):
 
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
+    async def setup_defaults(self, ctx: Context, 
+                             class_name: str = commands.parameter(description="Name of the class")) -> None:
+        """ 
+        Sets up the default roles for the professors 
+        """
+
+        # Verify class exists
+        if class_name not in self.student_info.keys():
+            return await ctx.send(f"{class_name} does not exist!")
+
+        # Call helper function
+        await self.add_professors(ctx, class_name)
+        bot_message = await ctx.send("Done.")
+        await bot_message.delete()
+
+
+    @commands.hybrid_command()
+    @commands.has_any_role('TAO Officer')
     async def remove_class(self, ctx: Context, 
                            class_name: str = commands.parameter(description="Name of the class to be removed")) -> None:
         """ Removes a class from the student info """
@@ -145,6 +163,10 @@ class Roles(commands.Cog):
         :param discord.Role class_role: The role associated with the entire class
         :param discord.User user: The user whose roles are being checked
         """
+        # Bot specific exception
+        if class_role is None:
+            return False
+        
         # Only applies to PHYS roles, don't check otherwise
         if "PHYS" not in class_role.name:
             return False
@@ -156,6 +178,58 @@ class Roles(commands.Cog):
                 return True
             
         return False
+    
+    async def add_professors(self, ctx: Context, class_name: str) -> None:
+        """ 
+        Helps add professors and their roles 
+        
+        :param Context ctx: Context based on the command invokation message
+        :param str file_name: The CSV file to read from
+        :param str class_name: The name of the class to add
+        """
+
+        # Alphabet for the emoji (there will not be more than 26 unique professors per class) + list of professors
+        professors = []
+        alphabet = "🇦🇧🇨🇩🇪🇫🇬🇭🇮🇯🇰🇱🇲🇳🇴🇵🇶🇷🇸🇹🇺🇻🇼🇽🇾🇿"
+        class_info = self.student_info[class_name]
+
+        # Extract profesor names from file
+        with open(f"cogs\{class_name}.csv") as csvfile:
+            reader = csv.reader(csvfile)
+            for row in reader:
+                professor = row[0]
+                # Check that person is a prof
+                if professor == "TBD": 
+                    continue
+
+                # Check that prof is not already accounted for
+                if professor in professors: 
+                    continue
+
+                # Non-existing professor role
+                if not discord.utils.get(ctx.guild.roles, name=professor):
+                    ctx.guild.create_role(professor)
+
+                # Add professor to the list
+                professors.append(professor)
+
+        # Sort professors, assign roles + emojis, and edit message accordingly
+        professors.sort()
+        for i in range(len(professors)):
+            emoji = alphabet[i]
+            role = discord.utils.get(ctx.guild.roles, name=professors[i])
+
+            class_info[1][emoji] = role
+            class_info[2][professors[i]] = emoji
+
+            await class_info[0][0].add_reaction(emoji)
+
+        professor_role_pairs = "".join([f"\nProfessor {key}: {class_info[2][key]}" for key in professors])
+        await class_info[0][0].edit(content=class_info[0][0].content + professor_role_pairs)
+
+
+
+
 
 
 async def setup(bot):
