@@ -194,7 +194,7 @@ class Roles(commands.Cog):
         class_info = self.student_info[class_name]
 
         # Extract profesor names from file
-        with open(f"cogs\{class_name}.csv") as csvfile:
+        with open(f"cogs/{class_name}.csv") as csvfile:
             reader = csv.reader(csvfile)
             for row in reader:
                 professor = row[0]
