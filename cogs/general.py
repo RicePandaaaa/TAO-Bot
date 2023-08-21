@@ -73,7 +73,7 @@ class General(commands.Cog):
         """ Basic command in case the question is asked is very vague """
 
         formatting_link = "https://support.discord.com/hc/en-us/articles/210298617-Markdown-Text-101-Chat-Formatting-Bold-Italic-Underline-"
-        await ctx.send(f"{ctx.author.display_name} wants to help you, but it seems that your question is rather unclear." \
+        await ctx.send(f"<@{ctx.author.id}> wants to help you, but it seems that your question is rather unclear." \
                        f" For coding questions, please consult <{formatting_link}> to properly show code snippets, but DO NOT SHARE CODE USED IN YOUR SUBMITTED ASSIGNMENTS." \
                         f" Also please provide full error messages for best results (you may explain the error but again, be sure your explanation is clear.)" \
                          f" For any other questions, please provide full context of your problem, including any related images that can help.")
