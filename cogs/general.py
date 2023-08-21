@@ -50,7 +50,7 @@ class General(commands.Cog):
     async def howdy(self, ctx: Context) -> None:
         """ Basic command for obtaining info about the bot """
         
-        await ctx.send("Howdy, I was created to assist PTs and professors in managing voice channels for one-on-one " \
+        await ctx.send("Howdy <@{ctx.author.id}>, I was created to assist PTs and professors in managing voice channels for one-on-one " \
                         "sessions for students and content reviews. I can also provide students with information " \
                         "related to office hours! Please type `tao.help` for a complete command list!")
 
@@ -58,13 +58,13 @@ class General(commands.Cog):
     async def officehours(self, ctx: Context) -> None:
         """ Basic command redirecting users to the office hours channel (for now) """
 
-        await ctx.send(f"If there is a link to the office hours times, it will be shown here: {self.office_hours}")
+        await ctx.send(f"Howdy <@{ctx.author.id}>, if there is a link to the office hours times, it will be shown here: {self.office_hours}")
         
     @commands.hybrid_command()
     async def cheating(self, ctx: Context) -> None:
         """ Basic command in regards of sus study material sources """
 
-        await ctx.send("Please do not use outside resources such as Chegg and ChatGPT to do your assignments!" \
+        await ctx.send(f"Howdy, <@{ctx.author.id}> would like to say to please do not use outside resources such as Chegg and ChatGPT to do your assignments!" \
                        " Also, if you are helping others, do be aware to not share your solutions or to share or say anything" \
                         " that may break the Aggie Honor Code and any rules set by your professor.")
 
@@ -82,7 +82,7 @@ class General(commands.Cog):
     async def code(self, ctx: Context) -> None:
         """ Basic command warning users against posting code for their HW or other assignments """
 
-        await ctx.send("**DO NOT SHARE ANY PART OF YOUR CODE THAT IS USED IN YOUR SUBMITTED ASSIGNMENTS.**" \
+        await ctx.send("Howdy, <@{ctx.author.id}> would like to remind you to **NEVER SHARE ANY PART OF YOUR CODE THAT IS USED IN YOUR SUBMITTED ASSIGNMENTS.**" \
                        " You can only share code that was created for purposes unrelated to your assignments." \
                         " Posting your code used in assignments (such as labs and HW) can and will lead to severe consequences.")
         
