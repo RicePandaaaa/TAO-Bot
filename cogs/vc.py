@@ -56,11 +56,12 @@ class VoiceChannel(commands.Cog):
     async def check_queue(self, ctx: Context) -> None:
         """ Outputs the first ten people in queue and the user's current position, if in queue """
 
-        vc = ctx.author.voice.channel
-        if vc is None:
+        # Check if user is even in a voice channel
+        if ctx.author.voice is None:
             return await ctx.send("You must be in a voice channel!")
         
         # Voice channel is not a queue channel
+        vc = ctx.author.voice.channel
         if vc.id not in self.queue_channels:
             return await ctx.send(f"{ctx.author.voice.channel.name} is not a valid queue voice channel!")
         
@@ -90,6 +91,10 @@ class VoiceChannel(commands.Cog):
         # Checks if the user is a valid PT
         if not self.is_pt(ctx.author.roles):
             return await ctx.send("Only PTs can use this command!")
+        
+        # Check if even in a voice channel
+        if ctx.author.voice is None:
+            return await ctx.send("You must be in an office hours voice channel to use this command.")
         
         # Check for valid voice channel
         vc = ctx.author.voice.channel
