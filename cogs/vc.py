@@ -78,7 +78,7 @@ class VoiceChannel(commands.Cog):
 
         # Output the results to the person
         subject_name = vc.name[:-6]
-        await ctx.send(f"Your overall position in the queue is: {overall_position}. Your position in the queue for '{subject_name}' is: {channel_position}")
+        await ctx.send(f"Howdy <@{ctx.author.id}>, your overall position in the queue is: {overall_position}. Your position in the queue for '{subject_name}' is: {channel_position}")
 
 
 
