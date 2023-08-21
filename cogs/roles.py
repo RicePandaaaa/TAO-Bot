@@ -108,6 +108,19 @@ class Roles(commands.Cog):
                     await user.add_roles(class_role_to_add)
                 await user.add_roles(prof_role_to_add)
 
+    @commands.hybrid_command()
+    @commands.has_any_role('TAO Officer')
+    async def remove_class(self, ctx: Context, 
+                           class_name: str = commands.parameter("Name of the class to be removed")) -> None:
+        """ Removes a class from the student info """
+        
+        # Check if the class exists
+        if class_name not in self.student_info.keys():
+            return await ctx.send(f"{class_name} is not a valid class!")
+        
+        del self.student_info[class_name]
+        await ctx.send(f"{class_name} has been removed!")
+
     def has_duplicate_roles(self, class_role: discord.Role, prof_role: discord.Role, user: discord.User) -> bool:
         """ 
         Checks if the user already has either the class or the professor roles to prevent duplicates 
