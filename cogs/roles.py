@@ -59,6 +59,8 @@ class Roles(commands.Cog):
         prof_info[professor] = reaction
         await message_info[0].add_reaction(reaction)
 
+        # Add the channel
+
         # Edit the prompt
         professor_role_pairs = "".join([f"\nProfessor {key}: {prof_info[key]}" for key in prof_info])
         await message_info[0].edit(content=message_info[0].content + professor_role_pairs)
@@ -184,7 +186,6 @@ class Roles(commands.Cog):
         Helps add professors and their roles 
         
         :param Context ctx: Context based on the command invokation message
-        :param str file_name: The CSV file to read from
         :param str class_name: The name of the class to add
         """
 
@@ -213,7 +214,10 @@ class Roles(commands.Cog):
                 # Add professor to the list
                 professors.append(professor)
 
-        # Sort professors, assign roles + emojis, and edit message accordingly
+        # Get category information
+        category = discord.utils.get(ctx.guild.categories, name=class_name)
+
+        # Sort professors, assign roles + emojis, and add channels
         professors.sort()
         for i in range(len(professors)):
             emoji = alphabet[i]
@@ -224,12 +228,20 @@ class Roles(commands.Cog):
 
             await class_info[0][0].add_reaction(emoji)
 
+            if not discord.utils.get(category.text_channels, name=professors[i].lower()):
+                # Only allow students of the same professor to view the channel
+                class_role = discord.utils.get(ctx.guild.roles, name=class_name)
+                overwrites = {
+                    ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                    class_role: discord.PermissionOverwrite(read_messages=False),
+                    role: discord.PermissionOverwrite(read_messages=True)
+                }
+
+                await category.create_text_channel(name=professors[i], overwrites=overwrites)
+
+        # Update the message
         professor_role_pairs = "".join([f"\nProfessor {key}: {class_info[2][key]}" for key in professors])
         await class_info[0][0].edit(content=class_info[0][0].content + professor_role_pairs)
-
-
-
-
 
 
 async def setup(bot):
