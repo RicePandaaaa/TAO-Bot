@@ -46,6 +46,30 @@ class General(commands.Cog):
                 ret += 1
 
         await ctx.send(f"Synced the tree to {ret}/{len(guilds)}.")
+
+
+    @commands.hybrid_command()
+    async def links(self, ctx: Context) -> None:
+        """ Basic command for obtaining links to the bot """
+
+        # Set up the embed
+        embed = discord.Embed(color=discord.Color.random())
+        embed.set_author(name="ENGR TAO Links")
+
+        # Add values to embed
+        links = {"bento.me":   "https://bento.me/engrtao",
+                 "Discord":    "https://tx.ag/taoserver",
+                 "YouTube":    "https://www.youtube.com/@engrtao",
+                 "Instagram:": "https://instagram.com/tamutao",
+                 "LinkedIn":   "https://www.linkedin.com/company/engr-tao/"}   
+        
+        for key in links.keys():
+            embed.add_field(name=key, value=links[key], inline=False)
+
+        # Send the embed
+        await ctx.send(embed=embed)
+
+
     @commands.hybrid_command()
     async def howdy(self, ctx: Context) -> None:
         """ Basic command for obtaining info about the bot """
