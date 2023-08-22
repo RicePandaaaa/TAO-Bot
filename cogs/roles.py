@@ -23,7 +23,7 @@ class Roles(commands.Cog):
 
         # Class name already in use
         if class_name in self.student_info.keys():
-            return await ctx.send("This class name is already in use!")
+            await ctx.send("This class name is already in use!")
         
         message = await ctx.send(f"{prompt}\n")
         self.student_info[class_name] = [[message, class_role], {}, {}]
@@ -34,7 +34,7 @@ class Roles(commands.Cog):
                             class_name: str = commands.parameter(description="The internal name of the class"), 
                             professor: str = commands.parameter(description="The name of the professor"), 
                             reaction: str = commands.parameter(description="The emoji used for the reaction"), 
-                            role: discord.Role = commands.parameter(description="The role in which students of this professor will receive")) -> None:
+                            role: discord.Role = commands.parameter(default=None, description="The role in which students of this professor will receive")) -> None:
         """ 
         Adds a professor to a pre-existing class prompt along with an internally connected role 
         """
@@ -54,12 +54,34 @@ class Roles(commands.Cog):
         if reaction in prof_info.values():
             return await ctx.send(f"`:{reaction}:` is already in use for this class!")
         
+        # This may take a while, acknowledge the command but defer the reply back
+        ctx.defer()
+        
         # Add the reaction 
         role_info[reaction] = role
         prof_info[professor] = reaction
         await message_info[0].add_reaction(reaction)
 
-        # Add the channel
+        # Create role if needed
+        if not discord.utils.get(ctx.guild.roles, name=professor):
+            await ctx.guild.create_role(name=professor)
+
+        prof_role = discord.utils.get(ctx.guild.roles, name=professor)
+
+        # Add the channel if needed
+        category = discord.utils.get(ctx.guild.categories, name=class_name)
+        if not discord.utils.get(category.text_channels, name=professor):
+            # Only allow students of the same professor to view the channel
+            class_role = discord.utils.get(ctx.guild.roles, name=class_name)
+            officer_role = discord.utils.get(ctx.guild.roles, name="TAO Officer")
+            overwrites = {
+                ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                class_role: discord.PermissionOverwrite(read_messages=False),
+                prof_role: discord.PermissionOverwrite(read_messages=True),
+                officer_role: discord.PermissionOverwrite(read_messages=True)
+            }
+
+            await category.create_text_channel(name=professor, overwrites=overwrites)
 
         # Edit the prompt
         professor_role_pairs = "".join([f"\nProfessor {key}: {prof_info[key]}" for key in prof_info])
@@ -193,6 +215,7 @@ class Roles(commands.Cog):
         # Alphabet for the emoji (there will not be more than 26 unique professors per class) + list of professors
         professors = []
         alphabet = "🇦🇧🇨🇩🇪🇫🇬🇭🇮🇯🇰🇱🇲🇳🇴🇵🇶🇷🇸🇹🇺🇻🇼🇽🇾🇿"
+        number_ids = [f'{num}\ufe0f\u20e3' for num in range(10)]
         class_info = self.student_info[class_name]
 
         # Extract profesor names from file
@@ -210,7 +233,7 @@ class Roles(commands.Cog):
 
                 # Non-existing professor role
                 if not discord.utils.get(ctx.guild.roles, name=professor):
-                    ctx.guild.create_role(professor)
+                    await ctx.guild.create_role(name=professor)
 
                 # Add professor to the list
                 professors.append(professor)
@@ -221,7 +244,7 @@ class Roles(commands.Cog):
         # Sort professors, assign roles + emojis, and add channels
         professors.sort()
         for i in range(len(professors)):
-            emoji = alphabet[i]
+            emoji = alphabet[i] if i < len(alphabet) else number_ids[len(alphabet) - i]
             role = discord.utils.get(ctx.guild.roles, name=professors[i])
 
             class_info[1][emoji] = role
@@ -229,22 +252,19 @@ class Roles(commands.Cog):
 
             await class_info[0][0].add_reaction(emoji)
 
-            # Remove the channel
-            channel = discord.utils.get(category.text_channels, name=professors[i].lower())
-            if channel is not None:
-                await channel.delete()
+            # Don't rewrite the channel
+            if not discord.utils.get(category.text_channels, name=professors[i]):
+                # Only allow students of the same professor to view the channel
+                class_role = discord.utils.get(ctx.guild.roles, name=class_name)
+                officer_role = discord.utils.get(ctx.guild.roles, name="TAO Officer")
+                overwrites = {
+                    ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                    class_role: discord.PermissionOverwrite(read_messages=False),
+                    role: discord.PermissionOverwrite(read_messages=True),
+                    officer_role: discord.PermissionOverwrite(read_messages=True)
+                }
 
-            # Only allow students of the same professor to view the channel
-            class_role = discord.utils.get(ctx.guild.roles, name=class_name)
-            officer_role = discord.utils.get(ctx.guild.roles, name="TAO Officer")
-            overwrites = {
-                ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                class_role: discord.PermissionOverwrite(read_messages=False),
-                role: discord.PermissionOverwrite(read_messages=True),
-                officer_role: discord.PermissionOverwrite(read_messages=True)
-            }
-
-            await category.create_text_channel(name=professors[i], overwrites=overwrites)
+                await category.create_text_channel(name=professors[i], overwrites=overwrites)
 
         # Update the message
         professor_role_pairs = "".join([f"\nProfessor {key}: {class_info[2][key]}" for key in professors])
