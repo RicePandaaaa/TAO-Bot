@@ -1,4 +1,4 @@
-import discord, csv
+import discord, csv, asyncio
 from discord.ext import commands
 from discord.ext.commands import Context
 
@@ -123,6 +123,7 @@ class Roles(commands.Cog):
             return await ctx.send(f"{class_name} does not exist!")
 
         # Call helper function
+        await ctx.defer()
         await self.add_professors(ctx, class_name)
         bot_message = await ctx.send("Done.")
         await bot_message.delete()
@@ -231,7 +232,7 @@ class Roles(commands.Cog):
             # Remove the channel
             channel = discord.utils.get(category.text_channels, name=professors[i].lower())
             if channel is not None:
-                channel.delete()
+                await channel.delete()
 
             # Only allow students of the same professor to view the channel
             class_role = discord.utils.get(ctx.guild.roles, name=class_name)
