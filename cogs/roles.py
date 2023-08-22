@@ -228,16 +228,22 @@ class Roles(commands.Cog):
 
             await class_info[0][0].add_reaction(emoji)
 
-            if not discord.utils.get(category.text_channels, name=professors[i].lower()):
-                # Only allow students of the same professor to view the channel
-                class_role = discord.utils.get(ctx.guild.roles, name=class_name)
-                overwrites = {
-                    ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                    class_role: discord.PermissionOverwrite(read_messages=False),
-                    role: discord.PermissionOverwrite(read_messages=True)
-                }
+            # Remove the channel
+            channel = discord.utils.get(category.text_channels, name=professors[i].lower())
+            if channel is not None:
+                channel.delete()
 
-                await category.create_text_channel(name=professors[i], overwrites=overwrites)
+            # Only allow students of the same professor to view the channel
+            class_role = discord.utils.get(ctx.guild.roles, name=class_name)
+            officer_role = discord.utils.get(ctx.guild.roles, name="TAO Officer")
+            overwrites = {
+                ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
+                class_role: discord.PermissionOverwrite(read_messages=False),
+                role: discord.PermissionOverwrite(read_messages=True),
+                officer_role: discord.PermissionOverwrite(read_messages=True)
+            }
+
+            await category.create_text_channel(name=professors[i], overwrites=overwrites)
 
         # Update the message
         professor_role_pairs = "".join([f"\nProfessor {key}: {class_info[2][key]}" for key in professors])
