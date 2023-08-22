@@ -74,7 +74,7 @@ class General(commands.Cog):
     async def howdy(self, ctx: Context) -> None:
         """ Basic command for obtaining info about the bot """
         
-        await ctx.send("Howdy <@{ctx.author.id}>, I was created to assist PTs and professors in managing voice channels for one-on-one " \
+        await ctx.send(f"Howdy <@{ctx.author.id}>, I was created to assist PTs and professors in managing voice channels for one-on-one " \
                         "sessions for students and content reviews. I can also provide students with information " \
                         "related to office hours! Please type `tao.help` for a complete command list!")
 
@@ -106,7 +106,7 @@ class General(commands.Cog):
     async def code(self, ctx: Context) -> None:
         """ Basic command warning users against posting code for their HW or other assignments """
 
-        await ctx.send("Howdy, <@{ctx.author.id}> would like to remind you to **NEVER SHARE ANY PART OF YOUR CODE THAT IS USED IN YOUR SUBMITTED ASSIGNMENTS.**" \
+        await ctx.send(f"Howdy, <@{ctx.author.id}> would like to remind you to **NEVER SHARE ANY PART OF YOUR CODE THAT IS USED IN YOUR SUBMITTED ASSIGNMENTS.**" \
                        " You can only share code that was created for purposes unrelated to your assignments." \
                         " Posting your code used in assignments (such as labs and HW) can and will lead to severe consequences.")
         
