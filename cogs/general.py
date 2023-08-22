@@ -60,7 +60,7 @@ class General(commands.Cog):
         links = {"bento.me":   "https://bento.me/engrtao",
                  "Discord":    "https://tx.ag/taoserver",
                  "YouTube":    "https://www.youtube.com/@engrtao",
-                 "Instagram:": "https://instagram.com/tamutao",
+                 "Instagram": "https://instagram.com/tamutao",
                  "LinkedIn":   "https://www.linkedin.com/company/engr-tao/"}   
         
         for key in links.keys():
