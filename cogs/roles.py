@@ -212,10 +212,9 @@ class Roles(commands.Cog):
         :param str class_name: The name of the class to add
         """
 
-        # Alphabet for the emoji (there will not be more than 26 unique professors per class) + list of professors
+        # Alphabet for the emoji + list of professors
         professors = []
         alphabet = "🇦🇧🇨🇩🇪🇫🇬🇭🇮🇯🇰🇱🇲🇳🇴🇵🇶🇷🇸🇹🇺🇻🇼🇽🇾🇿"
-        number_ids = [f'{num}\ufe0f\u20e3' for num in range(10)]
         class_info = self.student_info[class_name]
 
         # Extract profesor names from file
@@ -244,7 +243,7 @@ class Roles(commands.Cog):
         # Sort professors, assign roles + emojis, and add channels
         professors.sort()
         for i in range(len(professors)):
-            emoji = alphabet[i] if i < len(alphabet) else number_ids[len(alphabet) - i]
+            emoji = alphabet[i]
             role = discord.utils.get(ctx.guild.roles, name=professors[i])
 
             class_info[1][emoji] = role
@@ -253,9 +252,9 @@ class Roles(commands.Cog):
             await class_info[0][0].add_reaction(emoji)
 
             # Don't rewrite the channel
-            if not discord.utils.get(category.text_channels, name=professors[i]):
+            if not discord.utils.get(category.text_channels, name=professors[i].lower()):
                 # Only allow students of the same professor to view the channel
-                class_role = discord.utils.get(ctx.guild.roles, name=class_name)
+                class_role = class_info[0][1]
                 officer_role = discord.utils.get(ctx.guild.roles, name="TAO Officer")
                 overwrites = {
                     ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False),
