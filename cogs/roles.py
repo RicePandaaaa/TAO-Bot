@@ -70,7 +70,7 @@ class Roles(commands.Cog):
 
         # Add the channel if needed
         category = discord.utils.get(ctx.guild.categories, name=class_name)
-        if not discord.utils.get(category.text_channels, name=professor):
+        if category is not None and not discord.utils.get(category.text_channels, name=professor):
             # Only allow students of the same professor to view the channel
             class_role = discord.utils.get(ctx.guild.roles, name=class_name)
             officer_role = discord.utils.get(ctx.guild.roles, name="TAO Officer")
