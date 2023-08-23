@@ -11,6 +11,45 @@ class Roles(commands.Cog):
         # Nested dictionary: {class_name: [[message, class_role], {emoji: roles}, {professor: emoji}]}
         self.student_info = {}
 
+        # Welcome prompt info (the dict is in the form of {emoji: roles})
+        self.welcome_prompt_message = None
+        self.welcome_roles = {}
+
+    @commands.hybrid_command()
+    @commands.has_any_role('TAO Officer')
+    async def send_welcome_prompt(self, ctx: Context,
+                                  freshman_role: discord.Role = commands.parameter(description="The role for freshmen"),
+                                  sophomore_role: discord.Role = commands.parameter(description="The role for sophomores"),
+                                  junior_role: discord.Role = commands.parameter(description="The role for juniors"),
+                                  senior_role: discord.Role = commands.parameter(description="The role for seniors"),
+                                  super_senior_role: discord.Role = commands.parameter(description="The role for super seniors"),
+                                  guest_role: discord.Role = commands.parameter(description="The role for guests"),
+                                  graduate_role: discord.Role = commands.parameter(description="The role for former students")) -> None:
+        """ Basic command that sends a welcome prompt """
+        
+        # Set up the basic message
+        self.welcome_prompt_message = await ctx.send("Welcome to the TAO server! Please select your graduating year role by reacting below." \
+                                                     " If you are a former student, please choose the former student role, and if none of the" \
+                                                        " roles apply to you, please choose the guest role. **Selecting a role is mandatory to see the" \
+                                                            " the non-class specific channels. You can only choose one and this decision is irreversible.**" \
+                                                                f"\n 1\ufe0f\u20e3: {freshman_role}" \
+                                                                f"\n 2\ufe0f\u20e3: {sophomore_role}" \
+                                                                f"\n 3\ufe0f\u20e3: {junior_role}" \
+                                                                f"\n 4\ufe0f\u20e3: {senior_role}" \
+                                                                f"\n 5\ufe0f\u20e3: {super_senior_role}" \
+                                                                f"\n 6\ufe0f\u20e3: {guest_role}" \
+                                                                f"\n 7\ufe0f\u20e3: {graduate_role}")
+        
+        # Set up the welcome roles dictionary
+        roles = [freshman_role, sophomore_role, junior_role, senior_role, super_senior_role, guest_role, graduate_role]
+        emojis = [f"{num}\ufe0f\u20e3" for num in range(1, len(roles) + 1)]
+        self.welcome_roles = dict(zip(emojis, roles))
+
+        # Add the reactions and the associated roles to the message
+        for i in range(len(roles)):
+            await self.welcome_prompt_message.add_reaction(emojis[i])
+            
+
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
     async def send_student_role_prompt(self, ctx: Context, 
@@ -110,7 +149,7 @@ class Roles(commands.Cog):
     @commands.Cog.listener()
     async def on_reaction_add(self, reaction: discord.Reaction, user: discord.User) -> None :
         """ Assigns roles to users based on reactions to certain messages """
-        # Check the message reacted to against specific messages that are being monitored
+        # Check if the reaction is for getting class and professor roles
         for class_name in self.student_info.keys():
             class_info = self.student_info[class_name]
             message_id = class_info[0][0].id
@@ -131,6 +170,18 @@ class Roles(commands.Cog):
                 if class_role_to_add is not None:
                     await user.add_roles(class_role_to_add)
                 await user.add_roles(prof_role_to_add)
+
+        # Check if the reaction is for getting non-class specific roles
+        if reaction.message.id == self.welcome_prompt_message.id:
+            # Check that the student did not already select a role
+            for role in self.welcome_roles.values():
+                if role in user.roles:
+                    return
+
+            # Add the role
+            status_role_to_add = self.welcome_roles[reaction.emoji]
+            await user.add_roles(status_role_to_add)
+            
 
     @commands.hybrid_command()
     @commands.has_any_role('TAO Officer')
