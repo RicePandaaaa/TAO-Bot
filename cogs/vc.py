@@ -104,7 +104,8 @@ class VoiceChannel(commands.Cog):
             return await ctx.send("Your room is full!")
 
         # Check in the main queue
-        for member_id in self.queue:
+        for i in range(len(self.queue.keys())):
+            member_id = list(self.queue.keys())[i]
             pt_role_id = self.queue_channels[self.queue[member_id]]
             pt_role = ctx.author.guild.get_role(pt_role_id)
 
@@ -112,7 +113,7 @@ class VoiceChannel(commands.Cog):
             if pt_role in ctx.author.roles:
                 member = ctx.author.guild.get_member(member_id)
                 await member.move_to(vc)
-                await ctx.send(f"<@{member_id}> has been pulled into <#{vc.id}> led by PT <@{ctx.author.id}>")
+                return await ctx.send(f"<@{member_id}> has been pulled into <#{vc.id}> led by PT <@{ctx.author.id}>")
             
         # No valid students in queue
         await ctx.send("There are no students in queue that you can help with!")
@@ -130,6 +131,32 @@ class VoiceChannel(commands.Cog):
     
         del self.queue_channels[int(channel_id)]
         await ctx.send(f"The channel with id \"{channel_id}\" has been removed!")
+
+    @commands.hybrid_command()
+    @commands.has_any_role('PT')
+    async def clear_oh(self, ctx: Context) -> None:
+        """ Clears the voice channel, leaving just the PT in the room """
+
+        voice_state = ctx.author.voice
+
+        # Check that the PT is in a vc
+        if voice_state == None:
+            return await ctx.send("You must be in an Office Hours voice channel to use this command!")
+        
+        # Check that the PT is in an office hours vc
+        if not voice_state.channel.name.startswith("Office Hours"):
+            return await ctx.send("You must be in an Office Hours voice channel to use this command!")
+        
+        # Go through the voice channel and remove everyone but the PT
+        voice_channel_members = voice_state.channel.members
+        for i in range(len(voice_channel_members) - 1, -1, -1):
+            # Kick if not the PT
+            if voice_channel_members[i].id != ctx.author.id:
+                await voice_channel_members[i].move_to(None)
+
+        # Inform the PT that it is done
+        await ctx.send(f"<@{ctx.author.id}>, your channel has been cleared now!")
+
 
     @commands.Cog.listener()
     async def on_voice_state_update(self, member: discord.Member, before: discord.VoiceState, after: discord.VoiceState):
@@ -151,7 +178,7 @@ class VoiceChannel(commands.Cog):
                 await channel.delete()
 
         # Remove user from the queue
-        if before is not None and before.channel is not None and before.channel.id in self.queue_channels:
+        if before is not None and before.channel is not None and before.channel.id in self.queue_channels and member.id in self.queue:
             del self.queue[member.id]
 
         # Add user to queue and assign user to queue channel
