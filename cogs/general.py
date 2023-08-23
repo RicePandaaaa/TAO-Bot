@@ -164,6 +164,10 @@ class General(commands.Cog):
     async def joinvc(self, ctx: Context) -> None:
         """ Forces the bot to enter the voice channel in which the user is currently in """
 
+        # Check against the bot already being in a channel
+        if ctx.voice_client is not None:
+            return await ctx.send("The bot is already in a voice channel!")
+
         await ctx.author.voice.channel.connect()
         await ctx.send(f"Successfully joined, <#{ctx.author.voice.channel.id}>!")
 
@@ -171,6 +175,9 @@ class General(commands.Cog):
     @commands.has_any_role('TAO Officer')
     async def leavevc(self, ctx: Context) -> None:
         """ Forces the bot to gracefully leave the voice channel """
+        # Check against the bot not already being in a channel
+        if ctx.voice_client is None:
+            return await ctx.send("The bot is not already in a voice channel!")
         
         await ctx.voice_client.disconnect()
         await ctx.send(f"Successfully left the voice channel!")
