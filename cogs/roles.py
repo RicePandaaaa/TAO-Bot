@@ -23,7 +23,7 @@ class Roles(commands.Cog):
         
         """ Basic command to send welcome prompt and assign roles """
 
-        view = discord.ui.View()
+        view = discord.ui.View(timeout=None)
         year_select_menu = YearSelect(["Freshman", "Sophomore", "Junior", "Senior", "Super Senior", "Guest", "Former Student"],
                                       [freshman_role, sophomore_role, junior_role, senior_role,
                                        super_senior_role, guest_role, former_student_role])
@@ -57,7 +57,7 @@ class Roles(commands.Cog):
         await self.setup_prof_channels(category, professors, class_role, ctx.guild)
 
         # Set up the view and the prompt
-        view = discord.ui.View()
+        view = discord.ui.View(timeout=None)
         roles = [discord.utils.get(ctx.guild.roles, name=professor) for professor in professors]
         prof_select = ProfSelect(professors, roles, class_name, class_role)
         view.add_item(prof_select)
