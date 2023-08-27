@@ -1,4 +1,4 @@
-import discord, csv, asyncio
+import discord, csv
 from discord.ext import commands
 from discord.ext.commands import Context
 
@@ -63,6 +63,37 @@ class Roles(commands.Cog):
         view.add_item(prof_select)
 
         await ctx.send(prompt, view=view)
+
+    @commands.hybrid_command()
+    @commands.has_any_role("TAO Officer")
+    async def make_pt(self, ctx: Context,
+                      pt: discord.User = commands.parameter(description="The user who is getting PT roles"),
+                      class_role: discord.Role = commands.parameter(description="The class specific PT role(s)"),
+                      real_name : str = commands.parameter(default=None, description="The real name of the PT")) -> None:
+        
+        """ Basic command to assign PT roles, change username, and inform the user of their new Discord roles """
+        # Assign PT role
+        pt_role = discord.utils.get(ctx.guild.roles, name="PT")
+        if pt_role not in pt.roles:
+            await pt.add_roles(pt_role)
+
+        # Assign class role
+        if class_role not in pt.roles:
+            await pt.add_roles(class_role)
+
+        # Change name
+        if real_name is not None:
+            # New nickname would exceed max
+            if len(f"{real_name} | PT") > 32:
+                await pt.edit(nick="REAL NAME | PT")
+            else:
+                await pt.edit(nick=f"{real_name} | PT")
+
+        # Notify the PT and remind the officer to manually assign professor roles
+        await ctx.send(f"<@{pt.id}>, you have been granted PT roles for \"{class_role.name}\"! You should now be able to see " \
+                       f"<#1043024266888753182> and <#1143205554362269788>! If your display name was changed to \"REAL NAME | PT\", please manually " \
+                       f"change \"REAL NAME\" to whatever your name is (first name only is fine). "\
+                        f"\n<@{ctx.author.id}>, please remember to manually assign them their professor roles if they are supposed to have any!")
 
 
     async def setup_professor_roles(self, class_name: str, guild: discord.Guild) -> list[str]:
