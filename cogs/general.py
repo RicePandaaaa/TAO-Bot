@@ -47,7 +47,6 @@ class General(commands.Cog):
 
         await ctx.send(f"Synced the tree to {ret}/{len(guilds)}.")
 
-
     @commands.hybrid_command()
     async def links(self, ctx: Context) -> None:
         """ Basic command for obtaining links to the bot """
