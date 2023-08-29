@@ -10,7 +10,7 @@ class ProfSelect(discord.ui.Select):
         """        
         self.MIN_VALUES = 0
         self.MAX_VALUES = 1
-        self.PLACEHOLDER = "---"
+        self.PLACEHOLDER = "-- SELECT 102 PROF --"
         self.CUSTOM_ID = class_name
 
         self.prof_roles_dict = dict(zip([f"Professor {prof}" for prof in professors], prof_roles))
@@ -93,6 +93,47 @@ class YearSelect(discord.ui.Select):
         if len(self.values) > 0:
             # Assign roles
             role = self.status_role_dict[self.values[0]]
+            await user.add_roles(role)
+            await interaction.response.send_message(content=f"You have been assigned the \"{role.name}\" role!", ephemeral=True)
+
+
+class PhysicsSelect(discord.ui.Select):
+    def __init__(self, role_216: discord.Role, role_217: discord.Role) -> None:
+        """
+        Initialize the select menu with PHYS 216 and 217 roles
+
+        :param discord.Role role_216: The role for PHYS 216
+        :param discord.Role role_217: The role for PHYS 217
+        """
+        
+        self.MIN_VALUES = 0
+        self.MAX_VALUES = 1
+        self.PLACEHOLDER = "-- SELECT PHYS COURSE --"
+        self.role_216 = role_216
+        self.role_217 = role_217
+
+        super().__init__(options=[discord.SelectOption(label="PHYS 216"), discord.SelectOption(label="PHYS 217")],
+                         min_values=self.MIN_VALUES,
+                         max_values=self.MAX_VALUES,
+                         placeholder=self.PLACEHOLDER)
+        
+    async def callback(self, interaction: discord.Interaction) -> None:
+        """
+        Assigns roles depending on the response
+
+        :param discord.Interaction interaction: The interaction in which the button calling back is attached to
+        """
+        # Get the user
+        user = interaction.user
+        
+        # User already has roles
+        if self.role_216 in user.roles or self.role_217 in user.roles:
+            return await interaction.response.send_message(content="You already have a PHYS role!", ephemeral=True)
+
+        # Non empty selection
+        if len(self.values) > 0:
+            # Assign roles
+            role = self.role_216 if self.values[0] == "PHYS 216" else self.role_217
             await user.add_roles(role)
             await interaction.response.send_message(content=f"You have been assigned the \"{role.name}\" role!", ephemeral=True)
 
