@@ -35,7 +35,7 @@ class ProfSelect(discord.ui.Select):
         # Role check
         for role in user.roles:
             # Duplicate role check
-            if role.name == self.CUSTOM_ID:
+            if role.name == self.class_role.name:
                 return await interaction.response.send_message(content=f"You already chose your roles for {self.CUSTOM_ID}!", ephemeral=True)
             
             # Already has any physics role
