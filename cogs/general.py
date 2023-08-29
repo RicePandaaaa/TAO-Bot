@@ -76,6 +76,14 @@ class General(commands.Cog):
         await ctx.send(f"Howdy <@{ctx.author.id}>, I was created to assist PTs and professors in managing voice channels for one-on-one " \
                         "sessions for students and content reviews. I can also provide students with information " \
                         "related to office hours! Please type `tao.help` for a complete command list!")
+        
+    @commands.hybrid_command()
+    async def read(self, ctx: Context) -> None:
+        """ Basic command for reminding people to read the prompt and other sources """
+        
+        await ctx.send(f"Howdy, <@{ctx.author.id}> would like to let you know that you should **re-read the original source of " \
+                        "information** (from Canvas, Zybooks, or the syllabus most likely) as the answer (or otherwise very helpful information) "\
+                        "can be found there!")
 
     @commands.hybrid_command(aliases=["oh"])
     async def officehours(self, ctx: Context) -> None:
