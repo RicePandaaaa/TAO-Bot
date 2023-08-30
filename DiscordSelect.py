@@ -39,7 +39,7 @@ class ProfSelect(discord.ui.Select):
                 return await interaction.response.send_message(content=f"You already chose your roles for {role.name}!", ephemeral=True)
             
             # Already has any physics role
-            if role.name.startswith("PHYS"):
+            if self.CUSTOM_ID.startswith("PHYS") and role.name.startswith("PHYS"):
                 return await interaction.response.send_message(content="You already have PHYS roles assigned to you!", ephemeral=True)
 
         # Non empty selection
