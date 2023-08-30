@@ -81,9 +81,17 @@ class General(commands.Cog):
     async def read(self, ctx: Context) -> None:
         """ Basic command for reminding people to read the prompt and other sources """
         
-        await ctx.send(f"Howdy, <@{ctx.author.id}> would like to let you know that you should **re-read the original source of " \
+        await ctx.send(f"Howdy, <@{ctx.author.id}> would like to let you know that you should **re-read the prompt or relevant original source of " \
                         "information** (from Canvas, Zybooks, or the syllabus most likely) as the answer (or otherwise very helpful information) "\
                         "can be found there!")
+        
+    @commands.hybrid_command()
+    async def forum(self, ctx: Context) -> None:
+        """ Basic command for reminding people to post questions in the forum """
+
+        await ctx.send(f"Howdy, <@{ctx.author.id}> would like to let you know that your question is best posted in the forum channel! "\
+                       "As your question belongs in the forums, note that your question may not be answered in the current channel as to "\
+                       "prevent unnecessary discussion that clogs up the channel!")
 
     @commands.hybrid_command(aliases=["oh"])
     async def officehours(self, ctx: Context) -> None:
