@@ -2,13 +2,32 @@ import discord, csv
 from discord.ext import commands
 from discord.ext.commands import Context
 
-from DiscordSelect import ProfSelect, YearSelect
+from DiscordSelect import ProfSelect, YearSelect, AnnouncementsView
 
 
 class Roles(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+
+    @commands.hybrid_command()
+    @commands.has_any_role("TAO Officer")
+    async def send_announcements_prompt(self, ctx: Context,
+                                        server_role: discord.Role = commands.parameter(description="Server/TAO announcements role"),
+                                        board_role:  discord.Role = commands.parameter(description="Bulletin Board announcements role")) -> None:
+        
+        """ Basic command to show buttons for opting in and out of two different announcements roles """
+
+        message = f"By default, all members have:\n" \
+                  f"- \"{server_role.name}\" : For server/TAO club announcements\n" \
+                  f"- \"{board_role.name}\" : For announcements posted in the bulletin board channel\n\n" \
+                  f"The button options below allow you to opt in or opt out these roles as stated:\n" \
+                  f"- 1) Opt **into** \"{server_role.name}\"\n" \
+                  f"- 2) Opt **into** \"{board_role.name}\"\n" \
+                  f"- 3) Opt **out of** \"{server_role.name}\"\n" \
+                  f"- 4) Opt **out of** \"{board_role.name}\""
+        await ctx.send(message, view=AnnouncementsView(server_role, board_role))
+
 
     @commands.hybrid_command()
     @commands.has_any_role("TAO Officer")
