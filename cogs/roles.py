@@ -2,7 +2,7 @@ import discord, csv
 from discord.ext import commands
 from discord.ext.commands import Context
 
-from DiscordSelect import ProfSelect, YearSelect, PhysicsSelect
+from DiscordSelect import ProfSelect, YearSelect
 
 
 class Roles(commands.Cog):
@@ -35,17 +35,6 @@ class Roles(commands.Cog):
                        " If you are a professor, please email **taoengr@gmail.com** to verify your faculty status." \
                        " Do note that **your selection can only be changed by a mod**, so please be very careful which option you choose!", view=view)
 
-    @commands.hybrid_command()
-    @commands.has_any_role("TAO Officer")
-    async def send_physics_prompt(self, ctx: Context,
-                                  role_216: discord.Role = commands.parameter(description="Role to assign to PHYS 216 students"),
-                                  role_217: discord.Role = commands.parameter(description="Role to assign to PHYS 217 students")) -> None:
-        view = discord.ui.View(timeout=None)
-        phys_select_menu = PhysicsSelect(role_216, role_217)
-        view.add_item(phys_select_menu)
-
-        await ctx.send("If you are in either PHYS 216 or PHYS 217, please choose your course below! Remember that this decision can only be "\
-                       "changed by a moderator, so please choose carefully!", view=view)
 
     @commands.hybrid_command()
     @commands.has_any_role("TAO Officer")
