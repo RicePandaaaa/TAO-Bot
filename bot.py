@@ -26,7 +26,9 @@ Add two roles to users everytime someone joins
 """
 @bot.event
 async def on_member_join(member):
-    await member.add_roles(1147655175209754764, 1147655249784492113)
+    server_role = discord.utils.get(member.guild.roles, id=1147655175209754764)
+    board_role = discord.utils.get(member.guild.roles, id=1147655249784492113)
+    await member.add_roles(server_role, board_role)
 
 """
 Load the bot with cogs
