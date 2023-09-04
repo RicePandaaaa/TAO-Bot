@@ -18,7 +18,7 @@ class Roles(commands.Cog):
         
         """ Basic command to show buttons for opting in and out of two different announcements roles """
 
-        message = f"By default, all members have:\n" \
+        message = f"For announcement pings, you may have the following roles:\n" \
                   f"- \"{server_role.name}\" : For server/TAO club announcements\n" \
                   f"- \"{board_role.name}\" : For announcements posted in the bulletin board channel\n\n" \
                   f"The button options below allow you to opt in or opt out these roles as stated:\n" \
