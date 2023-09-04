@@ -22,6 +22,13 @@ async def on_ready():
     await channel.send("Howdy Anthony! The bot is ready to go!")
 
 """
+Add two roles to users everytime someone joins
+"""
+@bot.event
+async def on_member_join(member):
+    await member.add_roles(1147655175209754764, 1147655249784492113)
+
+"""
 Load the bot with cogs
 """
 async def load_extensions():
