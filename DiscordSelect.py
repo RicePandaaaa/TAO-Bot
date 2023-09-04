@@ -10,7 +10,7 @@ class ProfSelect(discord.ui.Select):
         """        
         self.MIN_VALUES = 0
         self.MAX_VALUES = 1
-        self.PLACEHOLDER = "-- SELECT 102 PROF --"
+        self.PLACEHOLDER = "---- SELECT PROF ----"
         self.CUSTOM_ID = class_name
 
         self.prof_roles_dict = dict(zip([f"Professor {prof}" for prof in professors], prof_roles))
@@ -97,46 +97,73 @@ class YearSelect(discord.ui.Select):
             await interaction.response.send_message(content=f"You have been assigned the \"{role.name}\" role!", ephemeral=True)
 
 
-class PhysicsSelect(discord.ui.Select):
-    def __init__(self, role_216: discord.Role, role_217: discord.Role) -> None:
+class AnnouncementsView(discord.ui.View):
+    def __init__(self, server_role: discord.Role, board_role: discord.Role):
         """
-        Initialize the select menu with PHYS 216 and 217 roles
+        Initialize the view with four buttons for adding or removing announcements roles
 
-        :param discord.Role role_216: The role for PHYS 216
-        :param discord.Role role_217: The role for PHYS 217
+        :param discord.Role server_role: The announcements role regarding server/club announcements
+        :param discord.Role board_role: The announcements role regarding bulletin board announcements
         """
+        super().__init__(timeout=None)
+        self.server_role = server_role
+        self.board_role = board_role
+
+    # Add the four buttons and link them to their callback functions
+    @discord.ui.button(label="1", style=discord.ButtonStyle.green)
+    async def add_server_role(self, interaction: discord.Interaction, button: discord.Button):
+        """
+        Add the role attached to server_role if already not added
+        """
+        # Check if role is already added
+        if self.server_role in interaction.user.roles:
+            return await interaction.response.send_message(content=f"You already have the \"{self.server_role.name}\" role!", ephemeral=True)
         
-        self.MIN_VALUES = 0
-        self.MAX_VALUES = 1
-        self.PLACEHOLDER = "-- SELECT PHYS COURSE --"
-        self.role_216 = role_216
-        self.role_217 = role_217
+        await interaction.user.add_roles(self.server_role)
+        message = f"\"{self.server_role.name}\" has been added: you will be pinged whenever a server/TAO club announcement goes out!"
+        await interaction.response.send_message(content=message, ephemeral=True)
 
-        super().__init__(options=[discord.SelectOption(label="PHYS 216"), discord.SelectOption(label="PHYS 217")],
-                         min_values=self.MIN_VALUES,
-                         max_values=self.MAX_VALUES,
-                         placeholder=self.PLACEHOLDER)
-        
-    async def callback(self, interaction: discord.Interaction) -> None:
+    @discord.ui.button(label="2", style=discord.ButtonStyle.green)
+    async def add_board_role(self, interaction: discord.Interaction, button: discord.Button):
         """
-        Assigns roles depending on the response
-
-        :param discord.Interaction interaction: The interaction in which the button calling back is attached to
+        Add the role attached to board_role if already not added
         """
-        # Get the user
-        user = interaction.user
+        # Check if role is already added
+        if self.board_role in interaction.user.roles:
+            return await interaction.response.send_message(content=f"You already have the \"{self.board_role.name}\" role!", ephemeral=True)
         
-        # User already has roles
-        if self.role_216 in user.roles or self.role_217 in user.roles:
-            return await interaction.response.send_message(content="You already have a PHYS role!", ephemeral=True)
+        await interaction.user.add_roles(self.board_role)
+        message = f"\"{self.board_role.name}\" has been added: you will be pinged whenever an announcement goes out in our bulletin board channel!"
+        await interaction.response.send_message(content=message, ephemeral=True)
 
-        # Non empty selection
-        if len(self.values) > 0:
-            # Assign roles
-            role = self.role_216 if self.values[0] == "PHYS 216" else self.role_217
-            await user.add_roles(role)
-            await interaction.response.send_message(content=f"You have been assigned the \"{role.name}\" role!", ephemeral=True)
+    @discord.ui.button(label="3", style=discord.ButtonStyle.red)
+    async def remove_server_role(self, interaction: discord.Interaction, button: discord.Button):
+        """
+        Remove the role attached to server_role if already added
+        """
+        # Check if role is not already added
+        if self.server_role not in interaction.user.roles:
+            return await interaction.response.send_message(content=f"You don't have the \"{self.server_role.name}\" role!", ephemeral=True)
+        
+        await interaction.user.remove_roles(self.server_role)
+        message = f"\"{self.server_role.name}\" has been removed: you will not be pinged whenever a server/TAO club announcement goes out!"
+        await interaction.response.send_message(content=message, ephemeral=True)
 
+    @discord.ui.button(label="4", style=discord.ButtonStyle.red)
+    async def remove_board_role(self, interaction: discord.Interaction, button: discord.Button):
+        """
+        Remove the role attached to board_role if already added
+        """
+        # Check if role is not already added
+        if self.board_role not in interaction.user.roles:
+            return await interaction.response.send_message(content=f"You don't have the \"{self.board_role.name}\" role!", ephemeral=True)
+        
+        await interaction.user.remove_roles(self.board_role)
+        message = f"\"{self.board_role.name}\" has been removed: you will be pinged whenever an announcement goes out in our bulletin board channel!"
+        await interaction.response.send_message(content=message, ephemeral=True)
+
+    async def has_role(self, role: discord.Role, user: discord.User) -> bool:
+        return role in user.roles
 
 
 
