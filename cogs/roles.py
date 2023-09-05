@@ -139,11 +139,16 @@ class Roles(commands.Cog):
                     # Skip if the professor is a repeat
                     if professor in professors: continue
 
+                    # Adjust for non ENGR 102 classes
+                    role_name = professor
+                    if not class_name.endswith("102"):
+                        role_name = class_name.split(" ")[1] + " " + role_name
+                    
                     # Create role if role is not pre-existing
-                    if not discord.utils.get(guild.roles, name=professor):
-                        await guild.create_role(name=professor)
+                    if not discord.utils.get(guild.roles, name=role_name):
+                        await guild.create_role(name=role_name)
 
-                    professors.append(professor)
+                    professors.append(role_name)
 
             professors.sort()
             return professors
