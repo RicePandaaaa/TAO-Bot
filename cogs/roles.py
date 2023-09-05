@@ -175,7 +175,7 @@ class Roles(commands.Cog):
             # Get the professor role
             professor_role = discord.utils.get(guild.roles, name=professor)
 
-            if not discord.utils.get(category.text_channels, name=professor.lower()):
+            if not discord.utils.get(category.text_channels, name="-".join(professor.split(" ")).lower()):
                 # Only allow students of the same professor to view the channel
                 officer_role = discord.utils.get(guild.roles, name="TAO Officer")
                 overwrites = {
