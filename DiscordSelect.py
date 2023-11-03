@@ -159,12 +159,47 @@ class AnnouncementsView(discord.ui.View):
             return await interaction.response.send_message(content=f"You don't have the \"{self.board_role.name}\" role!", ephemeral=True)
         
         await interaction.user.remove_roles(self.board_role)
-        message = f"\"{self.board_role.name}\" has been removed: you will be pinged whenever an announcement goes out in our bulletin board channel!"
+        message = f"\"{self.board_role.name}\" has been removed: you will not be pinged whenever an announcement goes out in our bulletin board channel!"
         await interaction.response.send_message(content=message, ephemeral=True)
 
     async def has_role(self, role: discord.Role, user: discord.User) -> bool:
         return role in user.roles
 
+class ReviewView(discord.ui.View):
+    def __init__(self, review_role: discord.Role):
+        """
+        Initialize the view with two buttons for adding or removing TAO Review role
 
+        :param discord.Role review_role: The role associated with TAO Review
+        """
+        super().__init__(timeout=None)
+        self.review_role = review_role
+
+    # Add the four buttons and link them to their callback functions
+    @discord.ui.button(label="1", style=discord.ButtonStyle.green)
+    async def add_review_role(self, interaction: discord.Interaction, button: discord.Button):
+        """
+        Add the role attached to server_role if already not added
+        """
+        # Check if role is already added
+        if self.review_role in interaction.user.roles:
+            return await interaction.response.send_message(content=f"You already have the \"{self.review_role}\" role!", ephemeral=True)
+        
+        await interaction.user.add_roles(self.server_role)
+        message = f"\"{self.review_role.name}\" has been added: you will be pinged whenever a TAO review announcement goes out!"
+        await interaction.response.send_message(content=message, ephemeral=True)
+
+    @discord.ui.button(label="2", style=discord.ButtonStyle.red)
+    async def remove_review_role(self, interaction: discord.Interaction, button: discord.Button):
+        """
+        Remove the role attached to server_role if already added
+        """
+        # Check if role is not already added
+        if self.review_role not in interaction.user.roles:
+            return await interaction.response.send_message(content=f"You don't have the \"{self.review_role.name}\" role!", ephemeral=True)
+        
+        await interaction.user.remove_roles(self.server_role)
+        message = f"\"{self.review_role.name}\" has been removed: you will not be pinged whenever a TAO review announcement goes out!"
+        await interaction.response.send_message(content=message, ephemeral=True)
 
 
