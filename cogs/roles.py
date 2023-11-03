@@ -31,6 +31,20 @@ class Roles(commands.Cog):
 
     @commands.hybrid_command()
     @commands.has_any_role("TAO Officer")
+    async def send_tao_review_prompt(self, ctx: Context,
+                                        review_role: discord.Role = commands.parameter(description="TAO review role")) -> None:
+        
+        """ Basic command to show buttons for opting in and out of TAO review roles """
+
+        message = f"For pings regarding TAO reviews, there is \"{review_role.name}\"!\n" \
+                  f"The button options below allow you to opt in or opt out this role as stated:\n" \
+                  f"- 1) Opt **into** \"{review_role.name}\"\n" \
+                  f"- 2) Opt **out of** \"{review_role.name}\"\n"
+        await ctx.send(message, view=AnnouncementsView(review_role))
+
+
+    @commands.hybrid_command()
+    @commands.has_any_role("TAO Officer")
     async def send_welcome_prompt(self, ctx: Context, 
                                   freshman_role:       discord.Role = commands.parameter(description="Role to assign to freshmen"),
                                   sophomore_role:      discord.Role = commands.parameter(description="Role to assign to sophomores"),
