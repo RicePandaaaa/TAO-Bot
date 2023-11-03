@@ -2,7 +2,7 @@ import discord, csv
 from discord.ext import commands
 from discord.ext.commands import Context
 
-from DiscordSelect import ProfSelect, YearSelect, AnnouncementsView
+from DiscordSelect import ProfSelect, YearSelect, AnnouncementsView, ReviewView
 
 
 class Roles(commands.Cog):
@@ -40,7 +40,7 @@ class Roles(commands.Cog):
                   f"The button options below allow you to opt in or opt out this role as stated:\n" \
                   f"- 1) Opt **into** \"{review_role.name}\"\n" \
                   f"- 2) Opt **out of** \"{review_role.name}\"\n"
-        await ctx.send(message, view=AnnouncementsView(review_role))
+        await ctx.send(message, view=ReviewView(review_role))
 
 
     @commands.hybrid_command()
