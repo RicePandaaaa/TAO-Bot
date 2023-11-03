@@ -185,7 +185,7 @@ class ReviewView(discord.ui.View):
         if self.review_role in interaction.user.roles:
             return await interaction.response.send_message(content=f"You already have the \"{self.review_role}\" role!", ephemeral=True)
         
-        await interaction.user.add_roles(self.server_role)
+        await interaction.user.add_roles(self.review_role)
         message = f"\"{self.review_role.name}\" has been added: you will be pinged whenever a TAO review announcement goes out!"
         await interaction.response.send_message(content=message, ephemeral=True)
 
@@ -198,7 +198,7 @@ class ReviewView(discord.ui.View):
         if self.review_role not in interaction.user.roles:
             return await interaction.response.send_message(content=f"You don't have the \"{self.review_role.name}\" role!", ephemeral=True)
         
-        await interaction.user.remove_roles(self.server_role)
+        await interaction.user.remove_roles(self.review_role)
         message = f"\"{self.review_role.name}\" has been removed: you will not be pinged whenever a TAO review announcement goes out!"
         await interaction.response.send_message(content=message, ephemeral=True)
 
