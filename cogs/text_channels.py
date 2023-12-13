@@ -22,7 +22,8 @@ class TextChannels(commands.Cog):
                 }
         rules = {
                 "Overview": "It is expected that all members of this server abide by policies set by TAMU and Discord within this server!" \
-                            "The relevant PT and student code of conduct links can be found above.",
+                            "The relevant PT and student code of conduct links can be found above. By participating in this server, you agree " \
+                            "to obey the rules and guidelines that govern this server.",
                 "Treating PTs": "PTs are students as well and have classes. Therefore, please be respectful if a PT is unavailable or must" \
                                 " leave when outside of their working hours!",
                 "Discussions about Grades": "Questions about why you got the grade you got and similar discussions must be conducted privately " \
