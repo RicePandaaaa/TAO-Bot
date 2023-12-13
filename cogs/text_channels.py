@@ -55,13 +55,13 @@ class TextChannels(commands.Cog):
  
         # Make each embed
         for embed_title in embed_map:
-            embed = discord.Embed(color=discord.Color.random())
+            embed = discord.Embed(color=discord.Color.dark_red())
             embed.set_author(name=embed_title)
 
             # Add the fields
             fields = embed_map[embed_title]
             for field_name in fields:
-                embed.add_field(field_name, fields[field_name])
+                embed.add_field(name=field_name, value=fields[field_name], inline=False)
 
             # Send the embed
             await ctx.send(embed=embed)
