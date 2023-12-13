@@ -61,7 +61,7 @@ class TextChannels(commands.Cog):
             # Add the fields
             fields = embed_map[embed_title]
             for field_name in fields:
-                embed.add_field(field_name, fields[field_name])
+                embed.add_field(name=field_name, value=fields[field_name], inline=False)
 
             # Send the embed
             await ctx.send(embed=embed)
