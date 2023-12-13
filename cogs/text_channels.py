@@ -45,7 +45,9 @@ class TextChannels(commands.Cog):
                 }
         role_select = {
                 "Channel": "https://discord.com/channels/1022962971607060540/1142107250366889985",
-                "Choosing Channels": "Please go to the above channel to choose your roles and gain access to the rest of the server!"
+                "Choosing Roles": "Please go to the above channel to choose your roles and gain access to the rest of the server!",
+                "Staff Verification": "To verify yourself as staff (PT, prof, or some other official TAMU faculty position), please follow " \
+                                      "the instructions in the channel linked above!"
         }
 
         # Match embeds to set of fields
