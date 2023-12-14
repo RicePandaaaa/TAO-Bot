@@ -184,6 +184,66 @@ class TextChannels(commands.Cog):
         # Send the embed
         await ctx.send(embed=embed)
 
+    @commands.hybrid_command()
+    @commands.has_any_role("TAO Officer")
+    async def role_selection_information(self, ctx: Context):
+        """ Command for providing useful information about the role selection """
+
+        # Field contents
+        fields = {
+            "Why Select Roles": "During the fall and spring semesters, all channels are locked behind certain roles. " \
+                                "Without the appropriate roles, you will not be able to get help from the server since there is " \
+                                "no way for members to see your questions. Also, questions in the wrong channel will be removed " \
+                                "and you will be reminded to ask in the appropriate channel.",
+            "How to Choose Roles": "Use the dropdowns in the prompts below to select the role you want! The role you select will be " \
+                                   "automatically added to you, and you will get a message from the bot letting you know the role was given to you. " \
+                                   "Do note that role changes can only be changed by moderators and admins. If you wish to change your role, " \
+                                   "feel free to ping <@256186886907756545> so that he can edit your roles!",
+            "Available Roles": "There are roles available for:" \
+                               "\n- Each subject (ENGR 102, ENGR/PHYS 216, and ENGR/PHYS 217) and their professors" \
+                               "\n- Announcements and Bulletin Board pings" \
+                               "\n- TAO Review pings"
+        }
+
+        # Make the embed
+        embed = discord.Embed(color=discord.Color.dark_red())
+        embed.set_author(name="PT and Faculty Verification")
+
+        # Add the fields
+        for field_name in fields:
+            embed.add_field(name=field_name, value=fields[field_name], inline=False)
+
+        # Send the embed
+        await ctx.send(embed=embed)
+
+    @commands.hybrid_command()
+    @commands.has_any_role("TAO Officer")
+    async def send_at_bottom_of_page_prompt(self, ctx: Context, link: str):
+        """
+        Sends a prompt letting users know that they are at the bottom of the channel and 
+        provides a link to the message at the top of the channel
+
+        :param str link: A link to the message at the top of the channel
+        """
+
+        # Field contents
+        fields = {
+            "You're at the bottom of the channel!": "For full information on PT/faculty verification and role selection, " \
+                                                    "please click the link below to be sent to the top of this channel!",
+            "Link": f"{link}"
+        }
+
+        # Make the embed
+        embed = discord.Embed(color=discord.Color.dark_red())
+        embed.set_author(name="PT and Faculty Verification")
+
+        # Add the fields
+        for field_name in fields:
+            embed.add_field(name=field_name, value=fields[field_name], inline=False)
+
+        # Send the embed
+        await ctx.send(embed=embed)
+
 
 async def setup(bot):
     await bot.add_cog(TextChannels(bot))
