@@ -160,13 +160,10 @@ class TextChannels(commands.Cog):
                         "please follow the instructions below for verification!",
             "For PTs": "Please send an email to `anthony.ha.pham@tamu.edu` (this email belongs to <@256186886907756545>) with the following information:" \
                        "\n- What classes you PT for (include course and section number such as PHYS 216 504 or ENGR 102 522)" \
-                       "\n- Your Discord username (not the nickname). If you go to User Settings -> My Account, the username should be listed under \"Username\"" \
-                       "\nPlease send the email from the same email you used to sign up for PT slots! Also please put something along the lines of \"PT Verification\" " \
-                       "in the email subject line so that <@256186886907756545> can more easily find your email. He will reply back to you within 24 hours: if not, " \
-                       "feel free to re-send the email or message him in Discord.",
+                       "\n- Your Discord username (not the nickname). If you go to User Settings -> My Account, the username should be listed under \"Username\"",
             "For Faculty": "Please send an email to `anthony.ha.pham@tamu.edu` (this email belongs to <@256186886907756545>) with the following information:" \
-                           "\n- Your Discord username (not the nickname). If you go to User Settings -> My Account, the username should be listed under \"Username\""\
-                           "\nPlease send the email from your TAMU email! Also, please put something along the lines of \"Faculty Verification\" " \
+                           "\n- Your Discord username (not the nickname). If you go to User Settings -> My Account, the username should be listed under \"Username\".",
+            "Subject Line and Response Time": "Please send the email from your TAMU email! Also, please put something along the lines of \"Faculty Verification\" " \
                            "in the email subject line so that <@256186886907756545> can more easily find your email. He will reply back to you within 24 hours: if not, " \
                            "feel free to re-send the email or message him in Discord.",
             "Verification Status": "If Anthony is unable to verify you, he will email you back asking for additional information or for you to re-send corrected information." \
