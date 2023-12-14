@@ -120,12 +120,12 @@ class TextChannels(commands.Cog):
                                            "specific to just your professor.",
             "General Channels": "These channels are for any sort of conversation related to the category they reside in.",
             "Help Channels": "These channels are for any sort of quick questions you have related to the subject.",
-            "<#1135409394339807242>": "Have a resume you want reviewed by your peers? Feel free to post your resume in here for free reviews! " \
+            "Resume Review: <#1135409394339807242>": "Have a resume you want reviewed by your peers? Feel free to post your resume in here for free reviews! " \
                                       "You can also anonymously have your resume posted using the link found here: https://discord.com/channels/1022962971607060540/1136675298088341636. " \
                                       "Feel free to remove or hide any personal identifying information such as your phone number and address.",
-            "<#1022962972060037222> and <#1146937486610792468>": "Keep up to date with any news regarding TAO and other clubs with these two channels! " \
-                                                                 "Only members with the \"Announcements\" and \"Bulletin Board\" will be pinged, so " \
-                                                                 "feel free to opt-in or opt-out of these roles in <#1142107250366889985>!"
+            "Server and Club Updates: <#1022962972060037222> and <#1146937486610792468>": "Keep up to date with any news regarding TAO and other clubs with these two channels! " \
+                                                                                          "Only members with the \"Announcements\" and \"Bulletin Board\" will be pinged, so " \
+                                                                                         "feel free to opt-in or opt-out of these roles in <#1142107250366889985>!"
         }
 
         # Connect fields to their embeds
