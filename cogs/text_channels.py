@@ -70,7 +70,7 @@ class TextChannels(commands.Cog):
             await ctx.send(embed=embed)
 
     @commands.hybrid_command()
-    @commands.has_any_role()
+    @commands.has_any_role("TAO Officer")
     async def send_discord_guide(self, ctx: Context):
         """ Sends out the embeds for Discord guide for those new to the platform """
 
