@@ -13,7 +13,7 @@ class TextChannels(commands.Cog):
     async def send_rules(self, ctx: Context):
         """ Command for bot to send out all TAO server rules """
 
-        # Embed fields
+        # Field contents
         links = {
                 "TA & PT Guidelines": "https://engineering.tamu.edu/cse/academics/peer-teachers/rules-logistics.html",
                 "Student Rules": "https://student-rules.tamu.edu/",
@@ -148,6 +148,44 @@ class TextChannels(commands.Cog):
 
             # Send the embed
             await ctx.send(embed=embed)
+
+    @commands.hybrid_command()
+    @commands.has_any_role("TAO Officer")
+    async def send_verification_prompt(self, ctx: Context):
+        """ Sends the prompt for faculty to verify themselves with the club """
+
+        # Field contents
+        fields = {
+            "Overview": "In order to be a verified PT (for ENGR 102 or ENGR/PHYS 216/217) or faculty member and to represent yourself as such, " \
+                        "please follow the instructions below for verification!",
+            "For PTs": "Please send an email to `anthony.ha.pham@tamu.edu` (this email belongs to <@256186886907756545>) with the following information:" \
+                       "\n- What classes you PT for (include course and section number such as PHYS 216 504 or ENGR 102 522)" \
+                       "\n- Your Discord username (not the nickname). If you go to User Settings -> My Account, the username should be listed under \"Username\"" \
+                       "\nPlease send the email from the same email you used to sign up for PT slots! Also please put something along the lines of \"PT Verification\" " \
+                       "in the email subject line so that <@256186886907756545> can more easily find your email. He will reply back to you within 24 hours: if not, " \
+                       "feel free to re-send the email or message him in Discord.",
+            "For Faculty": "Please send an email to `anthony.ha.pham@tamu.edu` (this email belongs to <@256186886907756545>) with the following information:" \
+                           "\n- Your Discord username (not the nickname). If you go to User Settings -> My Account, the username should be listed under \"Username\""\
+                           "\nPlease send the email from your TAMU email! Also, please put something along the lines of \"Faculty Verification\" " \
+                           "in the email subject line so that <@256186886907756545> can more easily find your email. He will reply back to you within 24 hours: if not, " \
+                           "feel free to re-send the email or message him in Discord.",
+            "Verification Status": "If Anthony is unable to verify you, he will email you back asking for additional information or for you to re-send corrected information." \
+                                   "\n\nIf he is able to verify you, then you will be granted the following roles:" \
+                                   "\n- The \"PT\" role and course specific PT role (for PTs)" \
+                                   "\n- The \"Prof\" role (for faculty)" \
+                                   "\n- Roles for your class (for PTs and faculty that teach ENGR 102 or ENGR/PHYS 216/217)"
+        }
+
+        # Make the embed
+        embed = discord.Embed(color=discord.Color.dark_red())
+        embed.set_author(name="PT and Faculty Verification")
+
+        # Add the fields
+        for field_name in fields:
+            embed.add_field(name=field_name, value=fields[field_name], inline=False)
+
+        # Send the embed
+        await ctx.send(embed=embed)
 
 
 async def setup(bot):
