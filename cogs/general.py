@@ -214,14 +214,14 @@ class General(commands.Cog):
 
         # Field contents
         fields = {
-            "Info for New PTs": "https://docs.google.com/document/d/1JvCgARe7d32JmA3MvYfoq2PwR3YdfZpuK48feHKUvtk/edit#heading=h.gwwqgp1crfcc",
-            "How to Log Hours": "https://discord.com/channels/1022962971607060540/1143205554362269788/1143936580243968090",
-            "216/217 Lab - Helpful Info": "https://docs.google.com/presentation/d/10ZxiElBy0SsB5s-FwOXpJD-jiORtwtdnGqKG4CxraZE/edit#slide=id.p"
+            "Info for New PTs (Google Doc)": "https://docs.google.com/document/d/1JvCgARe7d32JmA3MvYfoq2PwR3YdfZpuK48feHKUvtk/edit#heading=h.gwwqgp1crfcc",
+            "How to Log Hours (Discord Message Chain)": "https://discord.com/channels/1022962971607060540/1143205554362269788/1143936580243968090",
+            "216/217 Lab - Helpful Info (Google Slides)": "https://docs.google.com/presentation/d/10ZxiElBy0SsB5s-FwOXpJD-jiORtwtdnGqKG4CxraZE/edit#slide=id.p"
         }
 
         # Make the embed
         embed = discord.Embed(color=discord.Color.dark_red())
-        embed.set_author(name="PT and Faculty Verification")
+        embed.set_author(name="Helpful Resources for PTs!")
 
         # Add the fields
         for field_name in fields:
