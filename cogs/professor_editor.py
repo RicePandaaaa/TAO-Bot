@@ -11,8 +11,8 @@ class ProfEditor(commands.Cog):
     @commands.hybrid_command()
     @commands.has_any_role("TAO Officer")
     async def set_professors(self, ctx: Context, 
-                             class_name: str = commands.Parameter(description="Name of the class to change (case-sensitive)"),
-                             prof_names: str = commands.Parameter(description="List of all professor names, separated with only commas")):
+                             class_name: str = commands.parameter(description="Name of the class to change (case-sensitive)"),
+                             prof_names: str = commands.parameter(description="List of all professor names, separated with only commas")):
         pass
 
 
