@@ -97,13 +97,13 @@ class TextChannels(commands.Cog):
         }
         question_etiquette = {
             "Ask Away!": "Don't wait for someone to say that they are available. Just ask and someone will reply to you whenever possible.",
-            "Provide Information": "Please provide any information that you are allowed to share publically, such as assignment details" \
+            "Provide Information": "Please provide any information that you are allowed to share publically, such as assignment details " \
                                    "and errors messages. Do not share any information that you cannot share with a student, such as code " \
                                    "for graded assignments.",
             "Use the Forums": "If your question would require you to type more than two sentences, it's probably best to ask in the forum channel " \
                               "rather than the help channel. Asking in the forums also helps other students as they probably will have a similar question " \
                               "and would also want to know the solution(s).",
-            "Be Patient": "No one is required to be on Discord, including PTs and faculty. All time here is volunteer so please be patient when waiting " \
+            "Be Patient": "No one is required to be on Discord, including PTs and faculty. All time spent here is voluntary so please be patient when waiting " \
                           "for a reply to your question!",
             "Don't Expect the Solution": "PTs want to help you learn, not just arrive at the solution, so they will try their best to explain " \
                                          "and lead you to the right answer for some questions. Please do not expect to always have someone give " \
@@ -113,7 +113,7 @@ class TextChannels(commands.Cog):
             "FAQ Forum Channels": "FAQ forums are updated and verified by PTs and include answers to questions that are frequently asked to PTs. Sometimes, " \
                           "professors may even add additional info. Wwithin a FAQ forum, there are posts organized by unit or topic in order to help " \
                           "organize the questions and their answers. Students cannot ask or answer in here.",
-            "Subject Forum Channels": "This is where you can get help or discuss about your problem that cannot be reasonably asked with just a couple of sentences." \
+            "Subject Forum Channels": "This is where you can get help for or discuss your question that cannot be reasonably asked with just a couple of sentences." \
                               " Feel free to use the search functionality to see if your question has been asked before!",
             "Professor Specific Channels": "Channels with just a professor name (or subject followed by professor name) can only be seen by " \
                                            "students and PTs who have that professsor, so feel free to ask in those channels if your question is " \
