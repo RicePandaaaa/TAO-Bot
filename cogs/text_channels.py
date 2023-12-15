@@ -207,7 +207,7 @@ class TextChannels(commands.Cog):
 
         # Make the embed
         embed = discord.Embed(color=discord.Color.dark_red())
-        embed.set_author(name="PT and Faculty Verification")
+        embed.set_author(name="Role Selection Information")
 
         # Add the fields
         for field_name in fields:
