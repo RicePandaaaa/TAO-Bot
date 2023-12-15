@@ -207,5 +207,28 @@ class General(commands.Cog):
 
         self.office_hours = link
 
+    @commands.hybrid_command()
+    @commands.has_any_role('PT', 'TAO Officer', 'Prof')
+    async def ptresources(self, ctx: Context):
+        """ Sends an embed with links to useful resources for PTs """
+
+        # Field contents
+        fields = {
+            "Info for New PTs": "https://docs.google.com/document/d/1JvCgARe7d32JmA3MvYfoq2PwR3YdfZpuK48feHKUvtk/edit#heading=h.gwwqgp1crfcc",
+            "How to Log Hours": "https://discord.com/channels/1022962971607060540/1143205554362269788/1143936580243968090",
+            "216/217 Lab - Helpful Info": "https://docs.google.com/presentation/d/10ZxiElBy0SsB5s-FwOXpJD-jiORtwtdnGqKG4CxraZE/edit#slide=id.p"
+        }
+
+        # Make the embed
+        embed = discord.Embed(color=discord.Color.dark_red())
+        embed.set_author(name="PT and Faculty Verification")
+
+        # Add the fields
+        for field_name in fields:
+            embed.add_field(name=field_name, value=fields[field_name], inline=False)
+
+        # Send the embed
+        await ctx.send(embed=embed)
+
 async def setup(bot):
     await bot.add_cog(General(bot))
