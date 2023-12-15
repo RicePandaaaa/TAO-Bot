@@ -9,9 +9,9 @@ class General(commands.Cog):
         self.bot = bot
         self.office_hours = "\"DOES NOT EXIST YET\""
 
-        self.review_216 = "None"
-        self.review_217 = "None"
-        self.review_102 = "None"
+        self.review_216 = "N/A"
+        self.review_217 = "N/A"
+        self.review_102 = "N/A"
 
     @commands.hybrid_command()
     @commands.guild_only()
@@ -251,7 +251,7 @@ class General(commands.Cog):
 
         # Make the embed
         embed = discord.Embed(color=discord.Color.dark_red())
-        embed.set_author(name="Helpful Resources for PTs!")
+        embed.set_author(name="Resources made by TAO!")
 
         # Add the fields
         for field_name in fields:
