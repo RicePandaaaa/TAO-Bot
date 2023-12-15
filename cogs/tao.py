@@ -120,3 +120,6 @@ class TAO(commands.Cog):
 
         await ctx.send(f"{ctx.author.name} has changed the ENGR/PHYS review link (for the current semester) from {self.review_217} to {link}!")
         self.review_217 = link
+
+async def setup(bot):
+    await bot.add_cog(TAO(bot))
