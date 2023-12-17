@@ -14,7 +14,7 @@ class ProfEditor(commands.Cog):
                              class_name: str = commands.parameter(description="Name of the class to change (case-sensitive)"),
                              prof_names: str = commands.parameter(description="List of all professor names, separated with only commas")):
         try:
-            with open(f"cogs/{class_name}.csv", "r") as csv_file:
+            with open(f"cogs/{class_name}.csv", "w") as csv_file:
                 csv_file.writelines([name.strip() + "\n" for name in prof_names.split(",")])
 
         except:
