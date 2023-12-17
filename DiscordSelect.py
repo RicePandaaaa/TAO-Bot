@@ -13,7 +13,7 @@ class ProfSelect(discord.ui.Select):
         self.PLACEHOLDER = "---- SELECT PROF ----"
         self.CUSTOM_ID = class_name
 
-        self.prof_roles_dict = dict(zip([f"Professor {prof}" for prof in professors], prof_roles))
+        self.prof_roles_dict = dict(zip([f"Professor {prof.split(' ')[1]}" for prof in professors], prof_roles))
         self.class_role = class_role
 
         # Initialize with the above values
