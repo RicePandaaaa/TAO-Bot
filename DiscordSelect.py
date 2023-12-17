@@ -17,7 +17,7 @@ class ProfSelect(discord.ui.Select):
         self.class_role = class_role
 
         # Initialize with the above values
-        super().__init__(options=[ discord.SelectOption(label=f"Professor {prof}") for prof in professors ],
+        super().__init__(options=[ discord.SelectOption(label=f"Professor {prof.split(' ')[1]}") for prof in professors ],
                          min_values=self.MIN_VALUES,
                          max_values=self.MAX_VALUES,
                          placeholder=self.PLACEHOLDER,
