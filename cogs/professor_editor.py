@@ -17,6 +17,8 @@ class ProfEditor(commands.Cog):
             with open(f"cogs/{class_name}.csv", "w") as csv_file:
                 csv_file.writelines([name.strip() + "\n" for name in prof_names.split(",")])
 
+            await ctx.send(f"The professors list for \"{class_name}\" has been set to \"{prof_names}\"!")
+
         except:
             await ctx.send(f"There is no class named \"{class_name}\".")
 
