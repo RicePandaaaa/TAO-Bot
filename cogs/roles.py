@@ -145,7 +145,7 @@ class Roles(commands.Cog):
 
                 # Go through each professor and create the role if needed
                 for row in csv_reader:
-                    professor = row[0]
+                    professor = row[0].strip()
 
                     # Skip if placeholder value found
                     if professor == "TBD": continue
