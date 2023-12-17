@@ -15,7 +15,6 @@ class ProfEditor(commands.Cog):
                              prof_names: str = commands.parameter(description="List of all professor names, separated with only commas")):
         try:
             with open(f"cogs/{class_name}.csv", "r+") as csv_file:
-                print(csv_file.readlines())
                 csv_file.writelines([name.strip() + "\n" for name in prof_names.split(",")])
 
             await ctx.send(f"The professors list for \"{class_name}\" has been set to \"{prof_names}\"!")
