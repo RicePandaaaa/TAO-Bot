@@ -123,10 +123,11 @@ class Roles(commands.Cog):
                 await pt.edit(nick=f"{real_name} | PT")
 
         # Notify the PT and remind the officer to manually assign professor roles
-        await ctx.send(f"<@{pt.id}>, you have been granted PT roles for \"{class_role.name}\"! You should now be able to see " \
-                       f"<#1043024266888753182> and <#1143205554362269788>! If your display name was changed to \"REAL NAME | PT\", please manually " \
-                       f"change \"REAL NAME\" to whatever your name is (first name only is fine). "\
-                        f"\n<@{ctx.author.id}>, please remember to manually assign them their professor roles if they are supposed to have any!")
+        await ctx.send(f"\n<@{ctx.author.id}>, please remember to manually assign them their professor roles if they are supposed to have any!", ephemeral=True)
+        
+        # Log the command invokation in the bot-log channel
+        channel = self.bot.get_channel(1022982386557923369)
+        await channel.send(f"<@{ctx.author.id}> (ID: {ctx.author.id}) has applied PT roles to <@{pt.id}> (ID: {pt.id})")
 
 
     async def setup_professor_roles(self, class_name: str, guild: discord.Guild) -> list[str]:
