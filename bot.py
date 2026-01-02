@@ -1,6 +1,11 @@
 import asyncio, os, discord, logging
 from discord.ext import commands
 
+# Remove this once the bot is deployed
+from dotenv import load_dotenv
+
+load_dotenv()
+
 intents = discord.Intents.default()
 intents.members = True
 intents.message_content = True
@@ -8,6 +13,7 @@ intents.message_content = True
 logging.basicConfig(level=logging.INFO)
 
 bot = commands.Bot(intents=intents, command_prefix="tao.", activity=discord.Game(name="tao.help"))
+
 
 READY_CHANNEL_ID = int(os.environ['READY_CHANNEL_ID'])
 TOKEN = str(os.environ['TOKEN'])
@@ -19,7 +25,10 @@ Just a cute message to let me know the bot is on/
 async def on_ready():
     channel = bot.get_channel(READY_CHANNEL_ID)
 
-    await channel.send("Howdy Anthony! The bot is ready to go!")
+    if channel and isinstance(channel, discord.TextChannel):
+        await channel.send("Howdy Anthony! The bot is ready to go!")
+    else:
+        logging.warning("READY_CHANNEL_ID is not a valid text channel ID!")
 
 """
 Add two roles to users everytime someone joins
