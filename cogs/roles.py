@@ -2,7 +2,7 @@ import discord, csv
 from discord.ext import commands
 from discord.ext.commands import Context
 
-from DiscordSelect import ProfSelect, YearSelect, AnnouncementsView, ReviewView
+from DiscordSelect import ProfSelect, StudentSelect, AnnouncementsView, ReviewView
 
 
 class Roles(commands.Cog):
@@ -46,27 +46,22 @@ class Roles(commands.Cog):
     @commands.hybrid_command()
     @commands.has_any_role("TAO Officer")
     async def send_welcome_prompt(self, ctx: Context, 
-                                  freshman_role:       discord.Role = commands.parameter(description="Role to assign to freshmen"),
-                                  sophomore_role:      discord.Role = commands.parameter(description="Role to assign to sophomores"),
-                                  junior_role:         discord.Role = commands.parameter(description="Role to assign to juniors"),
-                                  senior_role:         discord.Role = commands.parameter(description="Role to assign to seniors"),
-                                  super_senior_role:   discord.Role = commands.parameter(description="Role to assign to super seniors"),
-                                  guest_role:          discord.Role = commands.parameter(description="Role to assign to guests"),
-                                  former_student_role: discord.Role = commands.parameter(description="Role to assign to former students")) -> None:
+                                  doing_etam_role:       discord.Role = commands.parameter(description="Role to assign to freshmen"),
+                                  done_with_etam_role:   discord.Role = commands.parameter(description="Role to assign to sophomores"),
+                                  visiting_student_role: discord.Role = commands.parameter(description="Role to assign to visiting students"),
+                                  alumni_role:           discord.Role = commands.parameter(description="Role to assign to alumni"),
+                                  ) -> None:
         
         """ Basic command to send welcome prompt and assign roles """
 
         view = discord.ui.View(timeout=None)
-        year_select_menu = YearSelect(["Freshman", "Sophomore", "Junior", "Senior", "Super Senior", "Guest", "Former Student"],
-                                      [freshman_role, sophomore_role, junior_role, senior_role,
-                                       super_senior_role, guest_role, former_student_role])
-        view.add_item(year_select_menu)
+        student_select_menu = StudentSelect(["Doing ETAM", "Done with ETAM", "Visiting Student", "Alumni"],
+                                      [doing_etam_role, done_with_etam_role, visiting_student_role, alumni_role])
+        view.add_item(student_select_menu)
 
         await ctx.send("Welcome to the TAO server! If you have not already, please **read the newcomer tips at " \
-                       "<#1144274416965013565> and the server guidelines at <#1023087608928153681>**. Also, please select what type of student " \
-                       "you are. Guests and former students do have a role as well, so please choose even if you are not a student. "\
-                       " If you are a professor, please email **taoengr@gmail.com** to verify your faculty status." \
-                       " Do note that **your selection can only be changed by a mod**, so please be very careful which option you choose!", view=view)
+                       "<#1144274416965013565> and the server guidelines at <#1023087608928153681>**. Also, please select what type of student you are (you can change this later)." \
+                       " If you are a professor, please email **anthony.ha.pham@tamu.edu** to verify your faculty status. Do note that **your selection can only be changed by a mod**, so please be very careful which option you choose!", view=view)
 
 
     @commands.hybrid_command()
@@ -83,7 +78,8 @@ class Roles(commands.Cog):
         # Invalid class name
         category = discord.utils.get(ctx.guild.categories, name=class_name)
         if category is None:
-            return await ctx.send("This is an invalid class name!")
+            await ctx.send("This is an invalid class name!")
+            return
 
         # Set up professors and their roles and channels
         professors = await self.setup_professor_roles(class_name, ctx.guild)
@@ -100,7 +96,7 @@ class Roles(commands.Cog):
     @commands.hybrid_command()
     @commands.has_any_role("TAO Officer")
     async def make_pt(self, ctx: Context,
-                      pt: discord.User = commands.parameter(description="The user who is getting PT roles"),
+                      pt: discord.Member = commands.parameter(description="The user who is getting PT roles"),
                       class_role: discord.Role = commands.parameter(description="The class specific PT role(s)"),
                       real_name : str = commands.parameter(default=None, description="The real name of the PT")) -> None:
         

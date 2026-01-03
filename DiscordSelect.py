@@ -1,3 +1,5 @@
+from ty_extensions import Unknown
+from typing import Any
 import discord
 
 class ProfSelect(discord.ui.Select):
@@ -33,6 +35,9 @@ class ProfSelect(discord.ui.Select):
         user = interaction.user
     
         # Role check
+        if not isinstance(user, discord.Member):
+            return await interaction.response.send_message(content="This command can only be used in a server!", ephemeral=True)
+
         for role in user.roles:
             # Duplicate role check
             if role.name == self.class_role.name:
@@ -56,19 +61,19 @@ class ProfSelect(discord.ui.Select):
             await interaction.response.send_message(content=f"You have been assigned \"{class_role.name}\" and \"{prof_role}\"!", ephemeral=True)
 
 
-class YearSelect(discord.ui.Select):
+class StudentSelect(discord.ui.Select):
     def __init__(self, student_statuses: list[str], roles: list[discord.Role]) -> None:
         """
-        Initialize the select menu with the names of potential roles
+        Initialize the select menu with the names of potential student statuses
 
-        :param list[str] role_names: List of names of the potential student statuses
-        :param list[discord.Role] roles: List of actual roles associated with the names
+        :param list[str] student_statuses: List of names of the potential student statuses
+        :param list[discord.Role] student_status_roles: List of actual roles associated with the names
         """
         
         self.status_role_dict = dict(zip(student_statuses, roles))
         self.MIN_VALUES = 0
         self.MAX_VALUES = 1
-        self.PLACEHOLDER = "-- SELECT YOUR ROLE --"
+        self.PLACEHOLDER = "-- SELECT YOUR STUDENT STATUS --"
 
         super().__init__(options=[discord.SelectOption(label=status) for status in student_statuses],
                          min_values=self.MIN_VALUES,
@@ -83,7 +88,11 @@ class YearSelect(discord.ui.Select):
         """
         # Get the user
         user = interaction.user
-        
+
+        # Role check
+        if not isinstance(user, discord.Member):
+            return await interaction.response.send_message(content="This command can only be used in a server!", ephemeral=True)
+
         # User already has roles
         for role in self.status_role_dict.values():
             if role in user.roles:
@@ -110,11 +119,16 @@ class AnnouncementsView(discord.ui.View):
         self.board_role = board_role
 
     # Add the four buttons and link them to their callback functions
-    @discord.ui.button(label="1", style=discord.ButtonStyle.green)
-    async def add_server_role(self, interaction: discord.Interaction, button: discord.Button):
+    @discord.ui.button(label="1", style=discord.ButtonStyle.green, custom_id="add_server_role")
+    async def add_server_role(self, interaction: discord.Interaction[Any], button: discord.Button[Unknown]) -> Any:
         """
         Add the role attached to server_role if already not added
         """
+
+        # Role check
+        if not isinstance(interaction.user, discord.Member):
+            return await interaction.response.send_message(content="This role selection can only be used in a server!", ephemeral=True)
+
         # Check if role is already added
         if self.server_role in interaction.user.roles:
             return await interaction.response.send_message(content=f"You already have the \"{self.server_role.name}\" role!", ephemeral=True)
@@ -123,11 +137,15 @@ class AnnouncementsView(discord.ui.View):
         message = f"\"{self.server_role.name}\" has been added: you will be pinged whenever a server/TAO club announcement goes out!"
         await interaction.response.send_message(content=message, ephemeral=True)
 
-    @discord.ui.button(label="2", style=discord.ButtonStyle.green)
-    async def add_board_role(self, interaction: discord.Interaction, button: discord.Button):
+    @discord.ui.button(label="2", style=discord.ButtonStyle.green, custom_id="add_board_role")
+    async def add_board_role(self, interaction: discord.Interaction[Any], button: discord.Button[Unknown]) -> Any:
         """
         Add the role attached to board_role if already not added
         """
+        # Ensure role selection is done in a server
+        if not isinstance(interaction.user, discord.Member):
+            return await interaction.response.send_message(content="This role selection can only be used in a server!", ephemeral=True)
+
         # Check if role is already added
         if self.board_role in interaction.user.roles:
             return await interaction.response.send_message(content=f"You already have the \"{self.board_role.name}\" role!", ephemeral=True)
@@ -136,11 +154,15 @@ class AnnouncementsView(discord.ui.View):
         message = f"\"{self.board_role.name}\" has been added: you will be pinged whenever an announcement goes out in our bulletin board channel!"
         await interaction.response.send_message(content=message, ephemeral=True)
 
-    @discord.ui.button(label="3", style=discord.ButtonStyle.red)
-    async def remove_server_role(self, interaction: discord.Interaction, button: discord.Button):
+    @discord.ui.button(label="3", style=discord.ButtonStyle.red, custom_id="remove_server_role")
+    async def remove_server_role(self, interaction: discord.Interaction[Any], button: discord.Button[Unknown]) -> Any:
         """
         Remove the role attached to server_role if already added
         """
+        # Ensure role selection is done in a server
+        if not isinstance(interaction.user, discord.Member):
+            return await interaction.response.send_message(content="This role selection can only be used in a server!", ephemeral=True)
+
         # Check if role is not already added
         if self.server_role not in interaction.user.roles:
             return await interaction.response.send_message(content=f"You don't have the \"{self.server_role.name}\" role!", ephemeral=True)
@@ -149,11 +171,15 @@ class AnnouncementsView(discord.ui.View):
         message = f"\"{self.server_role.name}\" has been removed: you will not be pinged whenever a server/TAO club announcement goes out!"
         await interaction.response.send_message(content=message, ephemeral=True)
 
-    @discord.ui.button(label="4", style=discord.ButtonStyle.red)
-    async def remove_board_role(self, interaction: discord.Interaction, button: discord.Button):
+    @discord.ui.button(label="4", style=discord.ButtonStyle.red, custom_id="remove_board_role")
+    async def remove_board_role(self, interaction: discord.Interaction[Any], button: discord.Button[Unknown]) -> Any:
         """
         Remove the role attached to board_role if already added
         """
+        # Ensure role selection is done in a server
+        if not isinstance(interaction.user, discord.Member):
+            return await interaction.response.send_message(content="This role selection can only be used in a server!", ephemeral=True)
+
         # Check if role is not already added
         if self.board_role not in interaction.user.roles:
             return await interaction.response.send_message(content=f"You don't have the \"{self.board_role.name}\" role!", ephemeral=True)
@@ -162,7 +188,7 @@ class AnnouncementsView(discord.ui.View):
         message = f"\"{self.board_role.name}\" has been removed: you will not be pinged whenever an announcement goes out in our bulletin board channel!"
         await interaction.response.send_message(content=message, ephemeral=True)
 
-    async def has_role(self, role: discord.Role, user: discord.User) -> bool:
+    async def has_role(self, role: discord.Role, user: discord.Member) -> bool:
         return role in user.roles
 
 class ReviewView(discord.ui.View):
@@ -176,11 +202,15 @@ class ReviewView(discord.ui.View):
         self.review_role = review_role
 
     # Add the four buttons and link them to their callback functions
-    @discord.ui.button(label="1", style=discord.ButtonStyle.green)
-    async def add_review_role(self, interaction: discord.Interaction, button: discord.Button):
+    @discord.ui.button(label="1", style=discord.ButtonStyle.green, custom_id="add_review_role")
+    async def add_review_role(self, interaction: discord.Interaction[Any], button: discord.Button[Unknown]) -> Any:
         """
         Add the role attached to server_role if already not added
         """
+        # Ensure role selection is done in a server
+        if not isinstance(interaction.user, discord.Member):
+            return await interaction.response.send_message(content="This role selection can only be used in a server!", ephemeral=True)
+
         # Check if role is already added
         if self.review_role in interaction.user.roles:
             return await interaction.response.send_message(content=f"You already have the \"{self.review_role}\" role!", ephemeral=True)
@@ -189,11 +219,15 @@ class ReviewView(discord.ui.View):
         message = f"\"{self.review_role.name}\" has been added: you will be pinged whenever a TAO review announcement goes out!"
         await interaction.response.send_message(content=message, ephemeral=True)
 
-    @discord.ui.button(label="2", style=discord.ButtonStyle.red)
-    async def remove_review_role(self, interaction: discord.Interaction, button: discord.Button):
+    @discord.ui.button(label="2", style=discord.ButtonStyle.red, custom_id="remove_review_role")
+    async def remove_review_role(self, interaction: discord.Interaction[Any], button: discord.Button[Unknown]) -> Any:
         """
         Remove the role attached to server_role if already added
         """
+        # Ensure role selection is done in a server
+        if not isinstance(interaction.user, discord.Member):
+            return await interaction.response.send_message(content="This role selection can only be used in a server!", ephemeral=True)
+
         # Check if role is not already added
         if self.review_role not in interaction.user.roles:
             return await interaction.response.send_message(content=f"You don't have the \"{self.review_role.name}\" role!", ephemeral=True)
