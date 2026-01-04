@@ -1,4 +1,3 @@
-from ty_extensions import Unknown
 from typing import Any
 import discord
 
@@ -119,8 +118,8 @@ class AnnouncementsView(discord.ui.View):
         self.board_role = board_role
 
     # Add the four buttons and link them to their callback functions
-    @discord.ui.button(label="1", style=discord.ButtonStyle.green, custom_id="add_server_role")
-    async def add_server_role(self, interaction: discord.Interaction[Any], button: discord.Button[Unknown]) -> Any:
+    @discord.ui.button(label="1", style=discord.ButtonStyle.green, custom_id="add_server_role")  # ty:ignore[invalid-argument-type]
+    async def add_server_role(self, interaction: discord.Interaction[Any], button: discord.Button) -> Any:
         """
         Add the role attached to server_role if already not added
         """
@@ -137,8 +136,8 @@ class AnnouncementsView(discord.ui.View):
         message = f"\"{self.server_role.name}\" has been added: you will be pinged whenever a server/TAO club announcement goes out!"
         await interaction.response.send_message(content=message, ephemeral=True)
 
-    @discord.ui.button(label="2", style=discord.ButtonStyle.green, custom_id="add_board_role")
-    async def add_board_role(self, interaction: discord.Interaction[Any], button: discord.Button[Unknown]) -> Any:
+    @discord.ui.button(label="2", style=discord.ButtonStyle.green, custom_id="add_board_role")  # ty:ignore[invalid-argument-type]
+    async def add_board_role(self, interaction: discord.Interaction[Any], button: discord.Button) -> Any:
         """
         Add the role attached to board_role if already not added
         """
@@ -154,8 +153,8 @@ class AnnouncementsView(discord.ui.View):
         message = f"\"{self.board_role.name}\" has been added: you will be pinged whenever an announcement goes out in our bulletin board channel!"
         await interaction.response.send_message(content=message, ephemeral=True)
 
-    @discord.ui.button(label="3", style=discord.ButtonStyle.red, custom_id="remove_server_role")
-    async def remove_server_role(self, interaction: discord.Interaction[Any], button: discord.Button[Unknown]) -> Any:
+    @discord.ui.button(label="3", style=discord.ButtonStyle.red, custom_id="remove_server_role")  # ty:ignore[invalid-argument-type]
+    async def remove_server_role(self, interaction: discord.Interaction[Any], button: discord.Button) -> Any:
         """
         Remove the role attached to server_role if already added
         """
@@ -171,8 +170,8 @@ class AnnouncementsView(discord.ui.View):
         message = f"\"{self.server_role.name}\" has been removed: you will not be pinged whenever a server/TAO club announcement goes out!"
         await interaction.response.send_message(content=message, ephemeral=True)
 
-    @discord.ui.button(label="4", style=discord.ButtonStyle.red, custom_id="remove_board_role")
-    async def remove_board_role(self, interaction: discord.Interaction[Any], button: discord.Button[Unknown]) -> Any:
+    @discord.ui.button(label="4", style=discord.ButtonStyle.red, custom_id="remove_board_role")  # ty:ignore[invalid-argument-type]
+    async def remove_board_role(self, interaction: discord.Interaction[Any], button: discord.Button) -> Any:
         """
         Remove the role attached to board_role if already added
         """
@@ -202,8 +201,8 @@ class ReviewView(discord.ui.View):
         self.review_role = review_role
 
     # Add the four buttons and link them to their callback functions
-    @discord.ui.button(label="1", style=discord.ButtonStyle.green, custom_id="add_review_role")
-    async def add_review_role(self, interaction: discord.Interaction[Any], button: discord.Button[Unknown]) -> Any:
+    @discord.ui.button(label="1", style=discord.ButtonStyle.green, custom_id="add_review_role")  # ty:ignore[invalid-argument-type]
+    async def add_review_role(self, interaction: discord.Interaction[Any], button: discord.Button) -> Any:
         """
         Add the role attached to server_role if already not added
         """
@@ -219,8 +218,8 @@ class ReviewView(discord.ui.View):
         message = f"\"{self.review_role.name}\" has been added: you will be pinged whenever a TAO review announcement goes out!"
         await interaction.response.send_message(content=message, ephemeral=True)
 
-    @discord.ui.button(label="2", style=discord.ButtonStyle.red, custom_id="remove_review_role")
-    async def remove_review_role(self, interaction: discord.Interaction[Any], button: discord.Button[Unknown]) -> Any:
+    @discord.ui.button(label="2", style=discord.ButtonStyle.red, custom_id="remove_review_role")  # ty:ignore[invalid-argument-type]
+    async def remove_review_role(self, interaction: discord.Interaction[Any], button: discord.Button) -> Any:
         """
         Remove the role attached to server_role if already added
         """
