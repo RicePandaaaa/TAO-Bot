@@ -46,9 +46,9 @@ class Roles(commands.Cog):
     @commands.hybrid_command()
     @commands.has_any_role("TAO Officer")
     async def send_welcome_prompt(self, ctx: Context, 
-                                  doing_etam_role:       discord.Role = commands.parameter(description="Role to assign to freshmen"),
-                                  done_with_etam_role:   discord.Role = commands.parameter(description="Role to assign to sophomores"),
-                                  visiting_student_role: discord.Role = commands.parameter(description="Role to assign to visiting students"),
+                                  doing_etam_role:       discord.Role = commands.parameter(description="Role to assign to those still in the ETAM process"),
+                                  done_with_etam_role:   discord.Role = commands.parameter(description="Role to assign to those who have completed the ETAM process"),
+                                  visiting_student_role: discord.Role = commands.parameter(description="Role to assign to those just visiting the server"),
                                   alumni_role:           discord.Role = commands.parameter(description="Role to assign to alumni"),
                                   ) -> None:
         
