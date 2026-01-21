@@ -195,7 +195,22 @@ class Roles(commands.Cog):
 
                 await category.create_text_channel(name=professor, overwrites=overwrites)
 
+    @commands.hybrid_command()
+    @commands.has_any_role("TAO Officer")
+    async def switch_pt_roles(self, 
+                              ctx: Context,
+                              old_role: discord.Role = commands.parameter(description="The role to switch from"),
+                              new_role: discord.Role = commands.parameter(description="The role to switch to")) -> None:
+        
+        """ Basic command to switch everyone with a role with another """
 
+        # Get all members with the old role
+        members = old_role.members
+
+        # Switch the roles
+        for member in members:
+            await member.remove_roles(old_role)
+            await member.add_roles(new_role)
 
 async def setup(bot):
     await bot.add_cog(Roles(bot))

@@ -1,6 +1,6 @@
-import discord, typing
+import discord
 from discord.ext import commands
-from discord.ext.commands import Context, Greedy
+from discord.ext.commands import Context
 
 
 class General(commands.Cog):
@@ -12,17 +12,15 @@ class General(commands.Cog):
         self.review_217 = "N/A"
         self.review_102 = "N/A"
 
-    @commands.hybrid_command()
-    @commands.guild_only()
-    async def sync(self, ctx: Context) -> None:
-        await ctx.bot.tree.sync(guild=ctx.guild)
-        await ctx.send("Commands synced!")
 
     @commands.hybrid_command()
     @commands.guild_only()
-    async def desync(self, ctx: Context) -> None:
+    async def sync(self, ctx: Context) -> None:
+        ctx.bot.tree.clear_commands(guild=None)
+        await ctx.bot.tree.sync(guild=None)
         ctx.bot.tree.clear_commands(guild=ctx.guild)
-        await ctx.send("Commands desynced!")
+        await ctx.bot.tree.sync(guild=ctx.guild)
+        await ctx.send("Commands synced!")
 
     @commands.hybrid_command()
     async def howdy(self, ctx: Context) -> None:

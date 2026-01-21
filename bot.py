@@ -19,14 +19,14 @@ READY_CHANNEL_ID = int(os.environ['READY_CHANNEL_ID'])
 TOKEN = str(os.environ['TOKEN'])
 
 """
-Just a cute message to let me know the bot is on/
+Just a message to let me know the bot is on
 """
 @bot.event
 async def on_ready():
     channel = bot.get_channel(READY_CHANNEL_ID)
 
     if channel and isinstance(channel, discord.TextChannel):
-        await channel.send("Howdy Anthony! The bot is ready to go!")
+        await channel.send("Howdy! The bot is ready to go!")
     else:
         logging.warning("READY_CHANNEL_ID is not a valid text channel ID!")
 
