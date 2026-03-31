@@ -87,7 +87,7 @@ class PrivateCategory(commands.Cog):
     @commands.hybrid_command()
     @commands.has_any_role("TAO Officer")
     async def set_private_category(self, ctx: Context,
-                    category_id: int = commands.parameter(description="The ID of the private category")) -> None:
+                    category_id: str = commands.parameter(description="The ID of the private category")) -> None:
         """ Sets the private category for the server """
 
         await ctx.defer(ephemeral=True)
@@ -96,14 +96,14 @@ class PrivateCategory(commands.Cog):
             await ctx.send("This command can only be used in a server.", ephemeral=True)
             return
 
-        self.private_category_id = category_id
+        self.private_category_id = int(category_id)
 
         await ctx.send(f"Private category set to {category_id}.", ephemeral=True)
 
     @commands.hybrid_command()
     @commands.has_any_role("TAO Officer")
     async def set_archive_category(self, ctx: Context,
-                                         category_id: int = commands.parameter(description="The ID of the archive category")) -> None:
+                                         category_id: str = commands.parameter(description="The ID of the archive category")) -> None:
         """ Sets the archive category for the server """
 
         await ctx.defer(ephemeral=True)
@@ -112,7 +112,7 @@ class PrivateCategory(commands.Cog):
             await ctx.send("This command can only be used in a server.", ephemeral=True)
             return
 
-        self.archive_category_id = category_id
+        self.archive_category_id = int(category_id)
 
         await ctx.send(f"Archive category set to {category_id}.", ephemeral=True)
 
