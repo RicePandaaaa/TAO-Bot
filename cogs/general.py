@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
-from discord.ext.commands import Context
+from discord.ext.commands import Context, Greedy
+import typing
 
 
 class General(commands.Cog):
@@ -12,15 +13,30 @@ class General(commands.Cog):
         self.review_217 = "N/A"
         self.review_102 = "N/A"
 
-
     @commands.hybrid_command()
     @commands.guild_only()
-    async def sync(self, ctx: Context) -> None:
-        ctx.bot.tree.clear_commands(guild=None)
-        await ctx.bot.tree.sync(guild=None)
-        ctx.bot.tree.clear_commands(guild=ctx.guild)
-        await ctx.bot.tree.sync(guild=ctx.guild)
-        await ctx.send("Commands synced!")
+    @commands.has_any_role('TAO Officer')
+    async def sync(self, ctx: Context, 
+                   guilds: Greedy[discord.Object] = commands.parameter(default=None, description="A list of guilds to go through"), 
+                   spec: typing.Optional[typing.Literal["~", "*", "^"]] = commands.parameter(default=None, description="Type of sync to be performed")) -> None:
+        """ 
+        Syncs the hybrid commands (allows for usage of slash commands), from discord.py server  
+        """
+        if not guilds:
+            if spec == "~":
+                synced = await ctx.bot.tree.sync(guild=ctx.guild)
+                print(synced)
+            elif spec == "*":
+                ctx.bot.tree.copy_global_to(guild=ctx.guild)
+                synced = await ctx.bot.tree.sync(guild=ctx.guild)
+                print(synced)
+            elif spec == "^":
+                ctx.bot.tree.clear_commands(guild=ctx.guild)
+                await ctx.bot.tree.sync(guild=ctx.guild)
+                synced = []
+            else:
+                synced = await ctx.bot.tree.sync()
+                print(synced)
 
     @commands.hybrid_command()
     async def howdy(self, ctx: Context) -> None:
