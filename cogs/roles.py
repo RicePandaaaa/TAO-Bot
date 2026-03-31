@@ -75,6 +75,10 @@ class Roles(commands.Cog):
         # Defer since this can take a while
         await ctx.defer()
 
+        if ctx.guild is None:
+            await ctx.send("This command can only be used in a server.", ephemeral=True)
+            return
+
         # Invalid class name
         category = discord.utils.get(ctx.guild.categories, name=class_name)
         if category is None:
@@ -87,7 +91,15 @@ class Roles(commands.Cog):
 
         # Set up the view and the prompt
         view = discord.ui.View(timeout=None)
-        roles = [discord.utils.get(ctx.guild.roles, name=professor) for professor in professors]
+        roles_raw: list[discord.Role | None] = [discord.utils.get(ctx.guild.roles, name=professor) for professor in professors]
+        roles = [role for role in roles_raw if role is not None]
+
+        # Alert if any professor roles are not found
+        if len(roles) != len(professors):
+            await ctx.send("Role not found for one or more professors.", ephemeral=True)
+            return
+
+        # Go through the roles and create the select menu
         prof_select = ProfSelect(professors, roles, class_name, class_role)
         view.add_item(prof_select)
 
@@ -101,9 +113,13 @@ class Roles(commands.Cog):
                       real_name : str = commands.parameter(default=None, description="The real name of the PT")) -> None:
         
         """ Basic command to assign PT roles, change username, and inform the user of their new Discord roles """
+        if ctx.guild is None:
+            await ctx.send("This command can only be used in a server.", ephemeral=True)
+            return
+
         # Assign PT role
         pt_role = discord.utils.get(ctx.guild.roles, name="PT")
-        if pt_role not in pt.roles:
+        if pt_role is not None and pt_role not in pt.roles:
             await pt.add_roles(pt_role)
 
         # Assign class role
@@ -123,7 +139,8 @@ class Roles(commands.Cog):
         
         # Log the command invokation in the bot-log channel
         channel = self.bot.get_channel(1022982386557923369)
-        await channel.send(f"<@{ctx.author.id}> (ID: {ctx.author.id}) has applied PT roles to <@{pt.id}> (ID: {pt.id})")
+        if isinstance(channel, discord.TextChannel):
+            await channel.send(f"<@{ctx.author.id}> (ID: {ctx.author.id}) has applied PT roles to <@{pt.id}> (ID: {pt.id})")
 
 
     async def setup_professor_roles(self, class_name: str, guild: discord.Guild) -> list[str]:
@@ -183,15 +200,19 @@ class Roles(commands.Cog):
             # Get the professor role
             professor_role = discord.utils.get(guild.roles, name=professor)
 
+            if professor_role is None:
+                continue
+
             if not discord.utils.get(category.text_channels, name="-".join(professor.split(" ")).lower()):
                 # Only allow students of the same professor to view the channel
                 officer_role = discord.utils.get(guild.roles, name="TAO Officer")
-                overwrites = {
+                overwrites: dict[discord.Role | discord.Member, discord.PermissionOverwrite] = {
                     guild.default_role: discord.PermissionOverwrite(read_messages=False),
                     class_role: discord.PermissionOverwrite(read_messages=False),
                     professor_role: discord.PermissionOverwrite(read_messages=True),
-                    officer_role: discord.PermissionOverwrite(read_messages=True)
                 }
+                if officer_role is not None:
+                    overwrites[officer_role] = discord.PermissionOverwrite(read_messages=True)
 
                 await category.create_text_channel(name=professor, overwrites=overwrites)
 
