@@ -10,7 +10,9 @@ class PrivateCategory(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.private_category_id = 1488619460897280222
-        self.archive_category_id = 0  # Replace with the actual archive category ID
+        self.archive_category_id = 0
+        
+        self.channel_students: dict[int, int] = {}
 
     @commands.hybrid_command()
     @commands.has_any_role("PT")
@@ -38,9 +40,51 @@ class PrivateCategory(commands.Cog):
         date_str = now.strftime("%b%d%y-%H%M").lower()  # e.g. mar3126-1453
         channel_name = f"{user.display_name.lower().replace(' ', '-')}-{date_str}"
         channel = await category.create_text_channel(name=channel_name, overwrites=overwrites)
+        self.channel_students[channel.id] = user.id
 
         await ctx.send(f"Created private room {channel.mention} for {user.mention}.", ephemeral=True)
 
+
+    @commands.hybrid_command()
+    async def close(self, ctx: Context) -> None:
+        """ Closes this private channel (student only): locks it and moves it to the archive """
+
+        await ctx.defer(ephemeral=True)
+
+        if ctx.guild is None:
+            await ctx.send("This command can only be used in a server.", ephemeral=True)
+            return
+
+        if not isinstance(ctx.channel, discord.TextChannel):
+            await ctx.send("This command can only be used in a text channel.", ephemeral=True)
+            return
+
+        channel = ctx.channel
+        student_id = self.channel_students.get(channel.id)
+
+        if student_id is None:
+            await ctx.send("This command can only be used in a private room.", ephemeral=True)
+            return
+
+        if ctx.author.id != student_id:
+            await ctx.send("Only the student this room was created for can close it.", ephemeral=True)
+            return
+
+        archive_category = ctx.guild.get_channel(self.archive_category_id)
+        if archive_category is None or not isinstance(archive_category, discord.CategoryChannel):
+            await ctx.send("Could not find the archive category.", ephemeral=True)
+            return
+
+        # Lock the channel for everyone, then move to archive
+        overwrites = channel.overwrites
+        for target in overwrites:
+            overwrites[target].send_messages = False
+        overwrites[ctx.guild.default_role] = discord.PermissionOverwrite(view_channel=False, send_messages=False)
+
+        await channel.edit(overwrites=overwrites, category=archive_category)
+        del self.channel_students[channel.id]
+
+        await ctx.send("This room has been closed and archived.", ephemeral=True)
 
     @commands.hybrid_command()
     @commands.has_any_role("TAO Officer")
