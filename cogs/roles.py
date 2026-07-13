@@ -1,8 +1,8 @@
-import discord, csv
+import discord
 from discord.ext import commands
 from discord.ext.commands import Context
 
-from DiscordSelect import ProfSelect, StudentSelect, AnnouncementsView, ReviewView
+from DiscordSelect import ProfSelect, StudentSelect, announcements_view, review_view
 
 
 class Roles(commands.Cog):
@@ -26,7 +26,7 @@ class Roles(commands.Cog):
                   f"- 2) Opt **into** \"{board_role.name}\"\n" \
                   f"- 3) Opt **out of** \"{server_role.name}\"\n" \
                   f"- 4) Opt **out of** \"{board_role.name}\""
-        await ctx.send(message, view=AnnouncementsView(server_role, board_role))
+        await ctx.send(message, view=announcements_view(server_role, board_role))
 
 
     @commands.hybrid_command()
@@ -40,7 +40,7 @@ class Roles(commands.Cog):
                   f"The button options below allow you to opt in or opt out this role as stated:\n" \
                   f"- 1) Opt **into** \"{review_role.name}\"\n" \
                   f"- 2) Opt **out of** \"{review_role.name}\"\n"
-        await ctx.send(message, view=ReviewView(review_role))
+        await ctx.send(message, view=review_view(review_role))
 
 
     @commands.hybrid_command()
@@ -55,8 +55,8 @@ class Roles(commands.Cog):
         """ Basic command to send welcome prompt and assign roles """
 
         view = discord.ui.View(timeout=None)
-        student_select_menu = StudentSelect(["Doing ETAM", "Done with ETAM", "Visiting Student", "Alumni"],
-                                      [doing_etam_role, done_with_etam_role, visiting_student_role, alumni_role])
+        student_select_menu = StudentSelect([doing_etam_role.id, done_with_etam_role.id,
+                                             visiting_student_role.id, alumni_role.id])
         view.add_item(student_select_menu)
 
         await ctx.send("Welcome to the TAO server! If you have not already, please **read the newcomer tips at " \
@@ -85,22 +85,19 @@ class Roles(commands.Cog):
             await ctx.send("This is an invalid class name!")
             return
 
-        # Set up professors and their roles and channels
-        professors = await self.setup_professor_roles(class_name, ctx.guild)
-        await self.setup_prof_channels(category, professors, class_role, ctx.guild)
-
-        # Set up the view and the prompt
-        view = discord.ui.View(timeout=None)
-        roles_raw: list[discord.Role | None] = [discord.utils.get(ctx.guild.roles, name=professor) for professor in professors]
-        roles = [role for role in roles_raw if role is not None]
-
-        # Alert if any professor roles are not found
-        if len(roles) != len(professors):
-            await ctx.send("Role not found for one or more professors.", ephemeral=True)
+        # No professors configured for this class
+        professors = await self.bot.db.get_professors(class_name)
+        if not professors:
+            await ctx.send(f"There are no professors configured for \"{class_name}\"! Use `set_professors` first.")
             return
 
-        # Go through the roles and create the select menu
-        prof_select = ProfSelect(professors, roles, class_name, class_role)
+        # Set up the professors' roles and channels
+        role_names = await self.setup_professor_roles(class_name, professors, ctx.guild)
+        await self.setup_prof_channels(category, role_names, class_role, ctx.guild)
+
+        # Go through the professors and create the select menu
+        view = discord.ui.View(timeout=None)
+        prof_select = ProfSelect(class_name, class_role.id, professors)
         view.add_item(prof_select)
 
         await ctx.send(prompt, view=view)
@@ -138,49 +135,33 @@ class Roles(commands.Cog):
         await ctx.send(f"\n<@{ctx.author.id}>, please remember to manually assign them their professor roles if they are supposed to have any!", ephemeral=True)
         
         # Log the command invokation in the bot-log channel
-        channel = self.bot.get_channel(1022982386557923369)
+        log_channel_id = await self.bot.db.get_config_id("pt_log_channel")
+        channel = self.bot.get_channel(log_channel_id) if log_channel_id is not None else None
         if isinstance(channel, discord.TextChannel):
             await channel.send(f"<@{ctx.author.id}> (ID: {ctx.author.id}) has applied PT roles to <@{pt.id}> (ID: {pt.id})")
 
 
-    async def setup_professor_roles(self, class_name: str, guild: discord.Guild) -> list[str]:
-        """ 
-        Helper function to set up the professors and their roles 
-        
+    async def setup_professor_roles(self, class_name: str, professors: list[str], guild: discord.Guild) -> list[str]:
+        """
+        Helper function to set up the professors' roles, returning the role names
+
         :param str class_name: Name of the class
+        :param list[str] professors: The list of professor names for the class
         :param discord.Guild guild: The Guild object representing the server
         """
-        professors = []
+        role_names = []
 
-        # Try to open the file if it exists
-        try:
-            with open(f"cogs/{class_name}.csv", "r") as csv_file:
-                csv_reader = csv.reader(csv_file)
+        # Go through each professor and create the role if needed
+        for professor in professors:
+            role_name = class_name.split(" ")[1] + " " + professor
 
-                # Go through each professor and create the role if needed
-                for row in csv_reader:
-                    professor = row[0].strip()
+            # Create role if role is not pre-existing
+            if not discord.utils.get(guild.roles, name=role_name):
+                await guild.create_role(name=role_name)
 
-                    # Skip if placeholder value found
-                    if professor == "TBD": continue
+            role_names.append(role_name)
 
-                    # Skip if the professor is a repeat
-                    if professor in professors: continue
-
-                    role_name = class_name.split(" ")[1] + " " + professor
-                    
-                    # Create role if role is not pre-existing
-                    if not discord.utils.get(guild.roles, name=role_name):
-                        await guild.create_role(name=role_name)
-
-                    professors.append(role_name)
-
-            professors.sort()
-            return professors
-
-        # File doesn't exist
-        except:
-            return professors
+        return role_names
         
     async def setup_prof_channels(self, category: discord.CategoryChannel, 
                                   professors: list[str],

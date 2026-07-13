@@ -9,10 +9,6 @@ class General(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.review_216 = "N/A"
-        self.review_217 = "N/A"
-        self.review_102 = "N/A"
-
     @commands.hybrid_command()
     @commands.guild_only()
     @commands.has_any_role('TAO Officer')

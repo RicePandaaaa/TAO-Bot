@@ -8,10 +8,6 @@ class TAO(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-        self.review_216 = "N/A"
-        self.review_217 = "N/A"
-        self.review_102 = "N/A"
-
     @commands.hybrid_command()
     @commands.has_any_role('PT', 'TAO Officer', 'Prof')
     async def ptresources(self, ctx: Context):
@@ -66,9 +62,9 @@ class TAO(commands.Cog):
             "TAO Drive": "https://tx.ag/taoreviewdrive",
             "216/217 Lab Helpful Info": "https://docs.google.com/presentation/d/10ZxiElBy0SsB5s-FwOXpJD-jiORtwtdnGqKG4CxraZE/edit#slide=id.p",
             "102 Helpful Info": "In progress!",
-            "216 Review (Current Semester)": self.review_216,
-            "217 Review (Current Semester)": self.review_217,
-            "102 Review (Current Semester)": self.review_102
+            "216 Review (Current Semester)": await self.bot.db.get_config("review_216", "N/A"),
+            "217 Review (Current Semester)": await self.bot.db.get_config("review_217", "N/A"),
+            "102 Review (Current Semester)": await self.bot.db.get_config("review_102", "N/A")
         }
 
         # Make the embed
@@ -92,8 +88,9 @@ class TAO(commands.Cog):
         :param str link: Link to 216 review resources
         """
 
-        await ctx.send(f"{ctx.author.name} has changed the ENGR/PHYS 216 review link (for the current semester) from {self.review_216} to {link}!")
-        self.review_216 = link
+        old_link = await self.bot.db.get_config("review_216", "N/A")
+        await self.bot.db.set_config("review_216", link)
+        await ctx.send(f"{ctx.author.name} has changed the ENGR/PHYS 216 review link (for the current semester) from {old_link} to {link}!")
 
     @commands.hybrid_command()
     @commands.has_any_role("TAO Officer")
@@ -105,8 +102,9 @@ class TAO(commands.Cog):
         :param str link: Link to 102 review resources
         """
 
-        await ctx.send(f"{ctx.author.name} has changed the ENGR 102 review link (for the current semester) from {self.review_102} to {link}!")
-        self.review_102 = link
+        old_link = await self.bot.db.get_config("review_102", "N/A")
+        await self.bot.db.set_config("review_102", link)
+        await ctx.send(f"{ctx.author.name} has changed the ENGR 102 review link (for the current semester) from {old_link} to {link}!")
 
     @commands.hybrid_command()
     @commands.has_any_role("TAO Officer")
@@ -118,8 +116,9 @@ class TAO(commands.Cog):
         :param str link: Link to 217 review resources
         """
 
-        await ctx.send(f"{ctx.author.name} has changed the ENGR/PHYS review link (for the current semester) from {self.review_217} to {link}!")
-        self.review_217 = link
+        old_link = await self.bot.db.get_config("review_217", "N/A")
+        await self.bot.db.set_config("review_217", link)
+        await ctx.send(f"{ctx.author.name} has changed the ENGR/PHYS 217 review link (for the current semester) from {old_link} to {link}!")
 
 async def setup(bot):
     await bot.add_cog(TAO(bot))

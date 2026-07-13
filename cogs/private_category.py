@@ -9,10 +9,15 @@ class PrivateCategory(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
-        self.private_category_id = 1488619460897280222
-        self.archive_category_id = 0
-        
-        self.channel_students: dict[int, int] = {}
+
+    async def get_category(self, guild: discord.Guild, key: str) -> discord.CategoryChannel | None:
+        """ Looks up a category from config ("private_category" or "archive_category") """
+        category_id = await self.bot.db.get_config_id(key)
+        if category_id is None:
+            return None
+
+        category = guild.get_channel(category_id)
+        return category if isinstance(category, discord.CategoryChannel) else None
 
     @commands.hybrid_command()
     @commands.has_any_role("PT")
@@ -26,9 +31,9 @@ class PrivateCategory(commands.Cog):
             await ctx.send("This command can only be used in a server.", ephemeral=True)
             return
 
-        category = ctx.guild.get_channel(self.private_category_id)
-        if category is None or not isinstance(category, discord.CategoryChannel):
-            await ctx.send("Could not find the private category", ephemeral=True)
+        category = await self.get_category(ctx.guild, "private_category")
+        if category is None:
+            await ctx.send("Could not find the private category. Set it with `config_set private_category <ID>`.", ephemeral=True)
             return
 
         overwrites = {
@@ -40,7 +45,7 @@ class PrivateCategory(commands.Cog):
         date_str = now.strftime("%b%d%y-%H%M").lower()  # e.g. mar3126-1453
         channel_name = f"{user.display_name.lower().replace(' ', '-')}-{date_str}"
         channel = await category.create_text_channel(name=channel_name, overwrites=overwrites)
-        self.channel_students[channel.id] = user.id
+        await self.bot.db.add_room(channel.id, user.id)
 
         await ctx.send(f"Created private room {channel.mention} for {user.mention}.", ephemeral=True)
 
@@ -60,7 +65,7 @@ class PrivateCategory(commands.Cog):
             return
 
         channel = ctx.channel
-        student_id = self.channel_students.get(channel.id)
+        student_id = await self.bot.db.get_room_student(channel.id)
 
         if student_id is None:
             await ctx.send("This command can only be used in a private room.", ephemeral=True)
@@ -70,8 +75,8 @@ class PrivateCategory(commands.Cog):
             await ctx.send("Only the student this room was created for can close it.", ephemeral=True)
             return
 
-        archive_category = ctx.guild.get_channel(self.archive_category_id)
-        if archive_category is None or not isinstance(archive_category, discord.CategoryChannel):
+        archive_category = await self.get_category(ctx.guild, "archive_category")
+        if archive_category is None:
             await ctx.send("Could not find the archive category.", ephemeral=True)
             return
 
@@ -82,7 +87,7 @@ class PrivateCategory(commands.Cog):
         overwrites[ctx.guild.default_role] = discord.PermissionOverwrite(view_channel=False, send_messages=False)
 
         await channel.edit(overwrites=overwrites, category=archive_category)
-        del self.channel_students[channel.id]
+        await self.bot.db.remove_room(channel.id)
 
         await ctx.send("This room has been closed and archived.", ephemeral=True)
 
@@ -97,13 +102,13 @@ class PrivateCategory(commands.Cog):
             await ctx.send("This command can only be used in a server.", ephemeral=True)
             return
 
-        private_category = ctx.guild.get_channel(self.private_category_id)
-        if private_category is None or not isinstance(private_category, discord.CategoryChannel):
+        private_category = await self.get_category(ctx.guild, "private_category")
+        if private_category is None:
             await ctx.send("Could not find the private category", ephemeral=True)
             return
 
-        archive_category = ctx.guild.get_channel(self.archive_category_id)
-        if archive_category is None or not isinstance(archive_category, discord.CategoryChannel):
+        archive_category = await self.get_category(ctx.guild, "archive_category")
+        if archive_category is None:
             await ctx.send("Could not find the archive category", ephemeral=True)
             return
 
@@ -128,37 +133,6 @@ class PrivateCategory(commands.Cog):
         else:
             await ctx.send("No channels were inactive long enough to archive.", ephemeral=True)
 
-    @commands.hybrid_command()
-    @commands.has_any_role("TAO Officer")
-    async def set_private_category(self, ctx: Context,
-                    category_id: str = commands.parameter(description="The ID of the private category")) -> None:
-        """ Sets the private category for the server """
-
-        await ctx.defer(ephemeral=True)
-
-        if ctx.guild is None:
-            await ctx.send("This command can only be used in a server.", ephemeral=True)
-            return
-
-        self.private_category_id = int(category_id)
-
-        await ctx.send(f"Private category set to {category_id}.", ephemeral=True)
-
-    @commands.hybrid_command()
-    @commands.has_any_role("TAO Officer")
-    async def set_archive_category(self, ctx: Context,
-                                         category_id: str = commands.parameter(description="The ID of the archive category")) -> None:
-        """ Sets the archive category for the server """
-
-        await ctx.defer(ephemeral=True)
-
-        if ctx.guild is None:
-            await ctx.send("This command can only be used in a server.", ephemeral=True)
-            return
-
-        self.archive_category_id = int(category_id)
-
-        await ctx.send(f"Archive category set to {category_id}.", ephemeral=True)
 
 async def setup(bot):
     await bot.add_cog(PrivateCategory(bot))
