@@ -32,8 +32,8 @@ class TAOBot(commands.Bot):
                 await self.load_extension(f"cogs.{filename[:-3]}")
 
     async def close(self):
-        await self.db.close()
         await super().close()
+        await self.db.close()
 
 
 bot = TAOBot()

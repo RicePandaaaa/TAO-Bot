@@ -39,8 +39,7 @@ All commands below are officer-only (`TAO Officer` role) unless noted.
 
 Config keys: `welcome_role_1`, `welcome_role_2` (roles added on member join), `pt_log_channel`
 (where `make_pt` is logged), `private_category` / `archive_category` (for `room` / `close` /
-`archive_rooms`), `review_216` / `review_217` / `review_102`, `announcement_role`,
-`advertisement_role`, and `announcement_channel` (used by the message logger, when configured).
+`archive_rooms`), `review_216` / `review_217` / `review_102`.
 
 After changing a professor list, re-post the selection prompt with `send_prof_prompt` — old
 prompts keep showing the old options.
@@ -60,6 +59,31 @@ minute. Officer-only query commands:
 
 `semester` = last 120 days.
 
+## Website message log
+
+The message log focuses on tracking the messages sent into the configured channels (optionally also tracking messages that mention a configured role). 
+
+Content, date, time, and message IDs are stored in the logged data within logs/sorted_data.json. 
+
+Tracked channels and roles are stored separately in logs/tracked_IDs.json when restarting the bot.
+
+All of this is managed hrough the web log command (weblog). Each message is able to be filed under more than one category at once (its channel's category and every mentioned (within the message) role's category). If an edit changes the roles mentioned, the message adjusts the categories, removing from the deleted mentioned role's categories and adding the new mentioned categories.
+
+If a message is deleted, they are removed from the logs and their category is renumbered to prevent gaps. This should happen only for accidental duplicate posts caught immediately and does not keep permanent announcement history of the channels it tracks.
+
+Command: weblog action: [add | delete | list] [channel: <#channel> | role: <@role>] name: [ category ]
+
+Adding a channel or role adds the id of the channel or role with the name of the category to the tracked list. 
+| *requires action, id (channel or role), and name
+
+Deleting a channel or role removes the id of the channel or role from the tracked list.
+| *requires action and id (channel or role)
+
+List provides all of the tracked channels and roles.
+| *requires action
+
+*This command requires administration access to change any of its parameters for tracked roles and channels. The responses for its commands show in the channel it is run within.
+
 ## Deployment notes
 
 - **First run** migrates the legacy `cogs/*.csv` professor lists into the database (only when
@@ -70,5 +94,5 @@ minute. Officer-only query commands:
   and must be re-posted once (`send_announcements_prompt`, `send_tao_review_prompt`,
   `send_welcome_prompt`, `send_prof_prompt`). Prompts posted after it keep working across
   restarts.
-- `data/` (the SQLite DB and its WAL sidecar files) must persist across restarts and is
+- `data/` (the SQLite DB and its WAL sidecar files) and `logs/` (message log and tracked-ID JSON files) must persist across restarts and is
   gitignored — back it up occasionally.
