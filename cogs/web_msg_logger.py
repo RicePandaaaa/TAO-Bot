@@ -157,10 +157,11 @@ class msglogger(commands.Cog):
     @app_commands.command(name="weblog", description="Manage the website message log tracking of roles and channels")
     @app_commands.default_permissions(administrator=True) #must be admin to use this :)
     async def weblog(self, interaction: discord.Interaction,
-                     action: Literal["add", "delete", "list"],
-                     name: str = None,
-                     channel: discord.TextChannel = None,
-                     role: discord.Role = None):
+                     action: Literal["add", "delete", "list"] = commands.parameter(default=None, description="Add or delete to the list, or list all of the tracked channels and roles for logging."),
+                     name: str = commands.parameter(default=None, description="Name of the Category of Tracked Data."),
+                     channel: discord.TextChannel = commands.parameter(default=None, description="Channel to be tracked (Can only add 1 at a time)"),
+                     role: discord.Role = commands.parameter(default=None, description="Role to be tracked (Can only add 1 at a time)"),
+                     ):
         
         if not interaction.user.guild_permissions.administrator:
             await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
