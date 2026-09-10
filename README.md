@@ -19,6 +19,9 @@ TOKEN=<bot token>
 READY_CHANNEL_ID=<channel the bot greets on startup>
 ```
 
+The bot also needs **Message Content Intent** enabled in the Discord Developer Portal
+under the bot's Privileged Gateway Intents. The code enables this intent in `bot.py`.
+
 Everything else is stored in `data/tao.db` (SQLite, created automatically) and is editable
 through commands **without restarting the bot**.
 
@@ -36,7 +39,8 @@ All commands below are officer-only (`TAO Officer` role) unless noted.
 
 Config keys: `welcome_role_1`, `welcome_role_2` (roles added on member join), `pt_log_channel`
 (where `make_pt` is logged), `private_category` / `archive_category` (for `room` / `close` /
-`archive_rooms`), `review_216` / `review_217` / `review_102`.
+`archive_rooms`), `review_216` / `review_217` / `review_102`, `announcement_role`,
+`advertisement_role`, and `announcement_channel` (used by the message logger, when configured).
 
 After changing a professor list, re-post the selection prompt with `send_prof_prompt` — old
 prompts keep showing the old options.
