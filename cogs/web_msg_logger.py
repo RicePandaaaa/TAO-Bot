@@ -4,7 +4,6 @@ from datetime import date, datetime
 from typing import Literal
 from discord.ext import commands #base bot stuff
 import discord
-from discord import app_commands
 
 #drive paths here
 tracked_pathway = "logs/tracked_IDs.json" #roles and channels tracked marked here
@@ -154,25 +153,21 @@ class msglogger(commands.Cog):
             self._renum_bucket(cat) #reorganise numbers
         self._save_data() #save data
 
-    @app_commands.command(name="weblog", description="Manage the website message log tracking of roles and channels")
-    @app_commands.default_permissions(administrator=True) #must be admin to use this :)
-    async def weblog(self, interaction: discord.Interaction,
+    @commands.hybrid_command(name="weblog", description="Manage the website message log tracking of roles and channels")
+    @commands.has_any_role("TAO Officer")
+    async def weblog(self, ctx: commands.Context,
                      action: Literal["add", "delete", "list"] = commands.parameter(default=None, description="Add or delete to the list, or list all of the tracked channels and roles for logging."),
                      name: str = commands.parameter(default=None, description="Name of the Category of Tracked Data."),
                      channel: discord.TextChannel = commands.parameter(default=None, description="Channel to be tracked (Can only add 1 at a time)"),
-                     role: discord.Role = commands.parameter(default=None, description="Role to be tracked (Can only add 1 at a time)"),
-                     ):
-        
-        if not interaction.user.guild_permissions.administrator:
-            await interaction.response.send_message("You do not have permission to use this command.", ephemeral=True)
-            return
+                     role: discord.Role = commands.parameter(default=None, description="Role to be tracked (Can only add 1 at a time)")
+                    ):
         
         if action == "list":
-            await interaction.response.send_message(f"Tracked channels: {list(tracked_channel.values())}\nTracked roles: {list(tracked_role.values())}", ephemeral=False)
+            await ctx.send(f"Tracked channels: {list(tracked_channel.values())}\nTracked roles: {list(tracked_role.values())}", ephemeral=False)
             return
 
         if (channel is None) == (role is None):
-            await interaction.response.send_message("You must specify either a channel or a role", ephemeral=True)
+            await ctx.send("You must specify either a channel or a role", ephemeral=True)
             return
         
         target_dict = tracked_channel if channel else tracked_role
@@ -180,19 +175,19 @@ class msglogger(commands.Cog):
 
         if action == "add":
             if name is None:
-                await interaction.response.send_message("You must specify a name for the new category.", ephemeral=True)
+                await ctx.send("You must specify a name for the new category.", ephemeral=True)
                 return
             elif (name in tracked_channel.values()) or (name in tracked_role.values()):
-                await interaction.response.send_message(f"The name '{name}' is already in use. Please choose a different name.", ephemeral=True)
+                await ctx.send(f"The name '{name}' is already in use. Please choose a different name.", ephemeral=True)
                 return
             if target_id in target_dict:
-                await interaction.response.send_message("That channel or role is already being tracked.", ephemeral=True)
+                await ctx.send("That channel or role is already being tracked.", ephemeral=True)
                 return
             target_dict[target_id] = name
             self.sorted_data.setdefault(name, {"next num": 1, "Message": {}})
             self._save_data()
             _save_tracked()
-            await interaction.response.send_message(f"Added {channel or role} tracking to category '{name}'.", ephemeral=False)
+            await ctx.send(f"Added {channel or role} tracking to category '{name}'.", ephemeral=False)
         elif action == "delete":
             cat = target_dict.pop(target_id, None)
             if cat is not None:
@@ -201,7 +196,7 @@ class msglogger(commands.Cog):
 
             _save_tracked()
 
-            await interaction.response.send_message(f"Stopped {channel or role} tracking.", ephemeral=False)
+            await ctx.send(f"Stopped {channel or role} tracking.", ephemeral=False)
         
 async def setup(bot: commands.Bot):
     await bot.add_cog(msglogger(bot))
