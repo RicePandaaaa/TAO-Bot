@@ -5,6 +5,7 @@ from typing import Literal
 from discord.ext import commands #base bot stuff
 import discord
 from discord import app_commands
+import re
 
 #drive paths here
 tracked_pathway = "logs/tracked_IDs.json" #roles and channels tracked marked here
@@ -85,19 +86,35 @@ class msglogger(commands.Cog):
         return{cat for role_id, cat in tracked_role.items() if f"<@&{role_id}>" in content}
       
     def _find_msg_cat(self, msg_id:int) -> str: #check category to find message id
-        return [cat for cat, data in self.sorted_data.items() if str(msg_id) in data["Message"]]
+        return [cat for cat, data in self.sorted_data.items() if isinstance(data, dict) and "Message" in data and str(msg_id) in data["Message"]]
 
     def _renum_bucket(self, cat:str): #renumber after deletion
+        if cat not in self.sorted_data or "Message" not in self.sorted_data[cat]:
+            return
         bucket = self.sorted_data[cat]
         ordered_ids = sorted(bucket["Message"].keys(), key = lambda ognum: bucket["Message"][ognum]["Number"]) #preserves the og number per message
         for i, ognum in enumerate(ordered_ids, start=1):
             bucket["Message"][ognum]["Number"] = i #renumber
         bucket["next num"] = len(ordered_ids) + 1 #next num of set
+
+    def _clean_content(self, content: str, guild: discord.Guild = None) -> str: #makes text content pretty with replacing raw discord message with pretty roles and channels for web viewing
+        def replace_mention(match):
+            role_id = int(match.group(1))
+            if role_id in tracked_role: #tracked role use local log stored names
+                return f"@{tracked_role[role_id]}"
+            if guild: #untracked role use discord stored names
+                role = guild.get_role(role_id)
+                if role:
+                    return f"@{role.name}"
+            return match.group(0) #role not found anywhere so leave the role be
+        return re.sub(r"<@&(\d+)>", replace_mention, content)
     
-    async def _synclog(self, channel:discord.TextChannel) -> set[str]: #gets all of the missed messages when offline and first load and sends to .json
+    async def _synclog(self, channel:discord.TextChannel, limits: int | None = None) -> set[str]: #gets all of the missed messages when offline and first load and sends to .json
         live_msg = set()
         try:
-            async for msg in channel.history(limit = None, oldest_first = True): #gets old messages oldest to newest
+            fetched = [msg async for msg in channel.history(limit=None, oldest_first=True)] #gets all of them
+
+            for msg in fetched:
                 if msg.author.bot:
                     continue
                 msg_id = str(msg.id)
@@ -113,8 +130,8 @@ class msglogger(commands.Cog):
 
                 for cat in ecat & wcat: #update when content changed (valid category)
                     entry = self.sorted_data[cat]["Message"][msg_id]
-                    if entry["Content"] != msg.content:
-                        entry["Content"] = msg.content
+                    if entry["Content"] != self._clean_content(msg.content, msg.guild):
+                        entry["Content"] = self._clean_content(msg.content, msg.guild)
                         entry["Date"] = dates
                         entry["Time"] = times
 
@@ -125,7 +142,7 @@ class msglogger(commands.Cog):
                             "Number": bucket["next num"],
                             "Date": dates,
                             "Time": times,
-                            "Content": msg.content,
+                            "Content": self._clean_content(msg.content, msg.guild),
                         }
                         bucket["next num"] += 1
 
@@ -135,13 +152,6 @@ class msglogger(commands.Cog):
 
         except (discord.Forbidden, discord.HTTPException) as e:
             print(f"Failed on syncing channel {channel.id}: {e}")
-
-        for cat, cat_data in list(self.sorted_data.items()): #removes logs when deleted offline
-            begone = set(cat_data["Message"]) - live_msg
-            for msg_id in begone:
-                cat_data["Message"].pop(msg_id, None)
-            if begone:
-                self._renum_bucket(cat)
 
         return live_msg
     
@@ -164,8 +174,17 @@ class msglogger(commands.Cog):
                 live = await self._synclog(channel)
                 all_live.update(live)
 
-            self._save_data()
-            print("Sync Complete.")
+        for cat, cat_data in list(self.sorted_data.items()):
+            if not isinstance(cat_data, dict) or "Message" not in cat_data:
+                continue
+            begone = set(cat_data["Message"]) - all_live
+            for msg_id in begone:
+                cat_data["Message"].pop(msg_id, None)
+            if begone:
+                self._renum_bucket(cat)
+
+        self._save_data()
+        print("Sync Complete.")
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message): #main function for logging messages
@@ -181,7 +200,7 @@ class msglogger(commands.Cog):
                 "Number": bucket["next num"],
                 "Date": date,
                 "Time": time,
-                "Content": message.content,
+                "Content": self._clean_content(message.content, message.guild),
             }
             bucket["next num"] += 1 #next num
         self._save_data() #save data
@@ -190,7 +209,7 @@ class msglogger(commands.Cog):
     async def on_raw_message_edit(self, payload: discord.RawMessageUpdateEvent): #logs message edits
         if payload.channel_id not in tracked_channel or "content" not in payload.data: #wrong channel / no edit change
             return
-        
+        guild = self.bot.get_guild(payload.guild_id)
         new_msg = payload.data["content"]
         edits = payload.data.get("edited_timestamp")
         if edits:
@@ -204,7 +223,7 @@ class msglogger(commands.Cog):
         wcat = ccat - {None} #wanted categories
         for cat in ecat: #if existing already
             entry = self.sorted_data[cat]["Message"][str(payload.message_id)]
-            entry["Content"] = new_msg #update text
+            entry["Content"] = self._clean_content(new_msg, guild) #update text
             entry["Date"], entry["Time"] = date,time #update timestamp
 
         for cat in wcat - set(ecat): #if new msg and category
@@ -213,7 +232,7 @@ class msglogger(commands.Cog):
                 "Number": bucket["next num"],
                 "Date": date,
                 "Time": time,
-                "Content": new_msg,
+                "Content": self._clean_content(new_msg, guild),
             }
             bucket["next num"] += 1 #next num
         
@@ -244,12 +263,11 @@ class msglogger(commands.Cog):
                      role: discord.Role = commands.parameter(default=None, description="Role to be tracked (Can only add 1 at a time)")
                     ):
         """Manage the website message log tracking of roles and channels"""
-        
-        if isinstance(action, app_commands.Choice):
-            action = action.value
 
         if action == "list":
-            await ctx.send(f"Tracked channels: {list(tracked_channel.values())}\nTracked roles: {list(tracked_role.values())}", ephemeral=False)
+            channelping = [f"<#{cid}> → {name}" for cid, name in tracked_channel.items()] or ["None tracked"]
+            roleping = [f"<@&{rid}> → {name}" for rid, name in tracked_role.items()] or ["None tracked"]
+            await ctx.send(f"**Tracked channels:**\n" + "\n".join(channelping) + f"\n**Tracked roles:**\n" + "\n".join(roleping))
             return
 
         if (channel is None) == (role is None):
@@ -275,7 +293,7 @@ class msglogger(commands.Cog):
             self.sorted_data.setdefault(name, {"next num": 1, "Message": {}})
             _save_tracked()
             if channel:
-                await self._synclog(channel) #get the channel synced asap
+                await self._synclog(channel, limits = None) #get the channel synced asap
             elif role:
                 for channels in list(tracked_channel.keys()): #search all the channels for this role
                     chat = self.bot.get_channel(channels) or await self.bot.fetch_channel(channels)
@@ -285,15 +303,17 @@ class msglogger(commands.Cog):
                         except(discord.NotFound, discord.Forbidden):
                             continue
                     if hasattr(chat, 'history'):
-                        await self._synclog(chat)
+                        await self._synclog(chat, limits = None)
 
             self._save_data()
             await ctx.send(f"Added {channel or role} tracking to category '{name}'.", ephemeral=False)
         elif action == "delete":
             cat = target_dict.pop(target_id, None)
             if cat is not None:
-                self.sorted_data.pop(cat, None)
-                self._save_data()
+                still_cat = cat in tracked_channel.values() or cat in tracked_role.values()
+                if not still_cat:
+                    self.sorted_data.pop(cat, None)
+                    self._save_data()
 
             _save_tracked()
 
