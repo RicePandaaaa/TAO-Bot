@@ -162,14 +162,14 @@ class TextChannels(commands.Cog):
             "Overview": "In order to be a verified PT (for ENGR 102 or ENGR/PHYS 216/217) or faculty member and to represent yourself as such, " \
                         "please follow the instructions below for verification!",
             "For PTs": "Please send an email to `"+pt_verify_email+"` (this email belongs to <@"+pt_verify_user_id+">) with the following information:" \
-                       "\n- What classes you PT for (include course and section number such as PHYS 216 504 or ENGR 102 522)" \
+                       "\n- What classes you PT for (include course, section number, and professor's name such as PHYS 216 504 Prof. White or ENGR 102 522 Dr. Ritchey)" \
                        "\n- Your Discord username (not the nickname). If you go to User Settings -> My Account, the username should be listed under \"Username\"",
             "For Faculty": "Please send an email to `"+pt_verify_email+"` (this email belongs to <@"+pt_verify_user_id+">) with the following information:" \
                            "\n- Your Discord username (not the nickname). If you go to User Settings -> My Account, the username should be listed under \"Username\".",
-            "Subject Line and Response Time": "Please send the email from your TAMU email! Also, please put something along the lines of \"Faculty Verification\" " \
+            "Subject Line and Response Time": "You must send the email from your TAMU email!!! Also, please put something along the lines of \"PT Verification\" or \"Faculty Verification\" " \
                            "in the email subject line so that <@"+pt_verify_user_id+"> can more easily find your email. They will reply back to you within 24 hours: if not, " \
-                           "feel free to re-send the email or message him in Discord.",
-            "Verification Status": "If "+pt_verify_name+" is unable to verify you, They will email you back asking for additional information or for you to re-send corrected information." \
+                           "feel free to re-send the email or message them in Discord.",
+            "Verification Status": "If "+pt_verify_name+" is unable to verify you from your TAMU email with the following information, They will email you back asking for additional information or for you to re-send corrected information." \
                                    "\n\nIf they are able to verify you, then you will be granted the following roles:" \
                                    "\n- The \"PT\" role and course specific PT role (for PTs)" \
                                    "\n- The \"Prof\" role (for faculty)" \
