@@ -2,6 +2,9 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import Context
 
+pt_verify_email = 'alex-gonce@tamu.edu'
+pt_verify_user_id = '367771798508404736'
+pt_verify_name = 'Alex'
 
 class TextChannels(commands.Cog):
 
@@ -158,16 +161,16 @@ class TextChannels(commands.Cog):
         fields = {
             "Overview": "In order to be a verified PT (for ENGR 102 or ENGR/PHYS 216/217) or faculty member and to represent yourself as such, " \
                         "please follow the instructions below for verification!",
-            "For PTs": "Please send an email to `anthony.ha.pham@tamu.edu` (this email belongs to <@256186886907756545>) with the following information:" \
+            "For PTs": "Please send an email to `"+pt_verify_email+"` (this email belongs to <@"+pt_verify_user_id+">) with the following information:" \
                        "\n- What classes you PT for (include course and section number such as PHYS 216 504 or ENGR 102 522)" \
                        "\n- Your Discord username (not the nickname). If you go to User Settings -> My Account, the username should be listed under \"Username\"",
-            "For Faculty": "Please send an email to `anthony.ha.pham@tamu.edu` (this email belongs to <@256186886907756545>) with the following information:" \
+            "For Faculty": "Please send an email to `"+pt_verify_email+"` (this email belongs to <@"+pt_verify_user_id+">) with the following information:" \
                            "\n- Your Discord username (not the nickname). If you go to User Settings -> My Account, the username should be listed under \"Username\".",
             "Subject Line and Response Time": "Please send the email from your TAMU email! Also, please put something along the lines of \"Faculty Verification\" " \
-                           "in the email subject line so that <@256186886907756545> can more easily find your email. He will reply back to you within 24 hours: if not, " \
+                           "in the email subject line so that <@"+pt_verify_user_id+"> can more easily find your email. They will reply back to you within 24 hours: if not, " \
                            "feel free to re-send the email or message him in Discord.",
-            "Verification Status": "If Anthony is unable to verify you, he will email you back asking for additional information or for you to re-send corrected information." \
-                                   "\n\nIf he is able to verify you, then you will be granted the following roles:" \
+            "Verification Status": "If "+pt_verify_name+" is unable to verify you, They will email you back asking for additional information or for you to re-send corrected information." \
+                                   "\n\nIf they are able to verify you, then you will be granted the following roles:" \
                                    "\n- The \"PT\" role and course specific PT role (for PTs)" \
                                    "\n- The \"Prof\" role (for faculty)" \
                                    "\n- Roles for your class (for PTs and faculty that teach ENGR 102 or ENGR/PHYS 216/217)"

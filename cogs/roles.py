@@ -4,6 +4,7 @@ from discord.ext.commands import Context
 
 from DiscordSelect import ProfSelect, StudentSelect, announcements_view, review_view
 
+pt_verify_email = 'alex-gonce@tamu.edu'
 
 class Roles(commands.Cog):
 
@@ -61,7 +62,7 @@ class Roles(commands.Cog):
 
         await ctx.send("Welcome to the TAO server! If you have not already, please **read the newcomer tips at " \
                        "<#1144274416965013565> and the server guidelines at <#1023087608928153681>**. Also, please select what type of student you are (you can change this later)." \
-                       " If you are a professor, please email **anthony.ha.pham@tamu.edu** to verify your faculty status. Do note that **your selection can only be changed by a mod**, so please be very careful which option you choose!", view=view)
+                       " If you are a professor, please email **"+pt_verify_email+"** to verify your faculty status. Do note that **your selection can only be changed by a mod**, so please be very careful which option you choose!", view=view)
 
 
     @commands.hybrid_command()
