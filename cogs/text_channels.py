@@ -1,12 +1,41 @@
 import discord
 from discord.ext import commands
 from discord.ext.commands import Context
-
+from discord import app_commands
 
 class TextChannels(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.pt_verify_email = 'alex-gonce@tamu.edu'
+        self.pt_verify_user_id = '367771798508404736'
+        self.pt_verify_name = 'Alex'
+
+    @commands.hybrid_command(name = "verifyupdate", description = "Update the PT/Prof verification information for the email, user_id, and name of who to contact")
+    @app_commands.describe(email = "Official TAMU Email address to contact (**** @tamu.edu).",
+                           user = "The mention of the officer who will be contacted from the email.",
+                           name = "The name of the officer who will be contacted.")
+    @commands.has_any_role("TAO Officer")
+    async def update_verification(self, ctx : commands.context,
+                                  name : str = commands.parameter(default = None, description = "The name of the officer who will be contacted."),
+                                  user: discord.Member = commands.parameter(default = None, description = "The mention of the officer who will be contacted from the email."),
+                                  email : str = commands.parameter(default = None, description = "Official TAMU Email address to contact (**** @tamu.edu).")):
+        """Update the PT/Prof verification information for the email, user_id, and name of who to contact"""
+
+        if (email is None) or (user is None) or (name is None):
+            await ctx.send("You must specify all fields.", ephemeral=True)
+            return
+        
+        if not (email.lower().endswith("@tamu.edu")):
+            await ctx.send("You must specify an official TAMU email.", ephemeral=True)
+            return
+        
+        self.pt_verify_name = name
+        self.pt_verify_user_id = str(user.id)
+        self.pt_verify_email = email
+
+        await ctx.send(f"Changed PT/Prof Verification information to {self.pt_verify_name} (<@{self.pt_verify_user_id}>), email: {self.pt_verify_email} !", ephemeral = False)
+
 
     @commands.hybrid_command()
     @commands.has_any_role("TAO Officer")
@@ -158,16 +187,16 @@ class TextChannels(commands.Cog):
         fields = {
             "Overview": "In order to be a verified PT (for ENGR 102 or ENGR/PHYS 216/217) or faculty member and to represent yourself as such, " \
                         "please follow the instructions below for verification!",
-            "For PTs": "Please send an email to `anthony.ha.pham@tamu.edu` (this email belongs to <@256186886907756545>) with the following information:" \
-                       "\n- What classes you PT for (include course and section number such as PHYS 216 504 or ENGR 102 522)" \
+            "For PTs": "Please send an email to `"+self.pt_verify_email+"` (this email belongs to <@"+self.pt_verify_user_id+">) with the following information:" \
+                       "\n- What classes you PT for (include course, section number, and professor's name such as PHYS 216 504 Prof. White or ENGR 102 522 Dr. Ritchey)" \
                        "\n- Your Discord username (not the nickname). If you go to User Settings -> My Account, the username should be listed under \"Username\"",
-            "For Faculty": "Please send an email to `anthony.ha.pham@tamu.edu` (this email belongs to <@256186886907756545>) with the following information:" \
+            "For Faculty": "Please send an email to `"+self.pt_verify_email+"` (this email belongs to <@"+self.pt_verify_user_id+">) with the following information:" \
                            "\n- Your Discord username (not the nickname). If you go to User Settings -> My Account, the username should be listed under \"Username\".",
-            "Subject Line and Response Time": "Please send the email from your TAMU email! Also, please put something along the lines of \"Faculty Verification\" " \
-                           "in the email subject line so that <@256186886907756545> can more easily find your email. He will reply back to you within 24 hours: if not, " \
-                           "feel free to re-send the email or message him in Discord.",
-            "Verification Status": "If Anthony is unable to verify you, he will email you back asking for additional information or for you to re-send corrected information." \
-                                   "\n\nIf he is able to verify you, then you will be granted the following roles:" \
+            "Subject Line and Response Time": "You must send the email from your TAMU email!!! Also, please put something along the lines of \"PT Verification\" or \"Faculty Verification\" " \
+                           "in the email subject line so that <@"+self.pt_verify_user_id+"> can more easily find your email. They will reply back to you within 24 hours: if not, " \
+                           "feel free to re-send the email or message them in Discord.",
+            "Verification Status": "If "+self.pt_verify_name+" is unable to verify you from your TAMU email with the following information, They will email you back asking for additional information or for you to re-send corrected information." \
+                                   "\n\nIf they are able to verify you, then you will be granted the following roles:" \
                                    "\n- The \"PT\" role and course specific PT role (for PTs)" \
                                    "\n- The \"Prof\" role (for faculty)" \
                                    "\n- Roles for your class (for PTs and faculty that teach ENGR 102 or ENGR/PHYS 216/217)"
