@@ -41,7 +41,7 @@ class General(commands.Cog):
         await ctx.send(f"Howdy <@{ctx.author.id}>, I was created to assist PTs and professors in managing voice channels for one-on-one " \
                         "sessions for students and content reviews. I can also provide students with information " \
                         "related to office hours! Please type `tao.help` for a complete command list!")
-        
+    
     @commands.hybrid_command()
     async def code(self, ctx: Context) -> None:
         """ Basic command warning users against posting code for their HW or other assignments """
@@ -59,6 +59,9 @@ class General(commands.Cog):
             "ETAM Information": "https://engineering.tamu.edu/academics/undergraduate/entry-to-a-major/index.html",
             "University Writing Center": "https://writingcenter.tamu.edu/",
             "Academic Success Center": "https://engineering.tamu.edu/academics/academic-support-services.html",
+            "Texas A&M Main Calendar": "https://calendar.tamu.edu/",
+            "Student Interest Events": "https://calendar.tamu.edu/student-interest/all",
+            "University Art Galleries": "https://uart.tamu.edu/"
         }
 
         # Make the embed
@@ -70,6 +73,26 @@ class General(commands.Cog):
             embed.add_field(name=field_name, value=fields[field_name], inline=False)
 
         # Send the embed
+        await ctx.send(embed=embed)
+    
+    @commands.hybrid_command()
+    async def mental_health_resources(self, ctx: Context) -> None:
+        """ Sends an embed with links to mental health resources """
+
+        fields = {
+            "University Health Services": "https://mentalhealth.tamu.edu/students/index.html",
+            "TELUS Health Student Support App (24/7)": "https://uhs.tamu.edu/mental-health/student-support.html",
+            "Texas A&M University Helplines": "https://mentalhealth.tamu.edu/crisis-resources.html",
+            "National Suicide and Crisis Lifeline (24/7)": "[Call 988](tel:988)",
+            "Crisis Text Hotline": "[Text HOME to 741741](sms:741741?body=HOME)"
+        }
+
+        embed = discord.Embed(color=discord.Color.dark_red())
+        embed.set_author(name="Mental Health Resources")
+
+        for field_name in fields:
+            embed.add_field(name=field_name, value=fields[field_name], inline=False)
+
         await ctx.send(embed=embed)
 
    
