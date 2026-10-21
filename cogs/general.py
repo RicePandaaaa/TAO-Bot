@@ -9,30 +9,43 @@ class General(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.hybrid_command()
+    # Prefix-only on purpose: a slash version would be visible to everyone and can't be used to fix a broken sync
+    @commands.command()
     @commands.guild_only()
     @commands.has_any_role('TAO Officer')
-    async def sync(self, ctx: Context, 
-                   guilds: Greedy[discord.Object] = commands.parameter(default=None, description="A list of guilds to go through"), 
+    async def sync(self, ctx: Context,
+                   guilds: Greedy[discord.Object] = commands.parameter(default=None, description="A list of guilds to go through"),
                    spec: typing.Optional[typing.Literal["~", "*", "^"]] = commands.parameter(default=None, description="Type of sync to be performed")) -> None:
-        """ 
-        Syncs the hybrid commands (allows for usage of slash commands), from discord.py server  
+        """
+        Syncs the hybrid commands (allows for usage of slash commands), from discord.py server
         """
         if not guilds:
             if spec == "~":
                 synced = await ctx.bot.tree.sync(guild=ctx.guild)
-                print(synced)
             elif spec == "*":
                 ctx.bot.tree.copy_global_to(guild=ctx.guild)
                 synced = await ctx.bot.tree.sync(guild=ctx.guild)
-                print(synced)
             elif spec == "^":
                 ctx.bot.tree.clear_commands(guild=ctx.guild)
                 await ctx.bot.tree.sync(guild=ctx.guild)
                 synced = []
             else:
                 synced = await ctx.bot.tree.sync()
-                print(synced)
+
+            await ctx.send(f"Synced {len(synced)} commands {'globally' if spec is None else 'to the current server'}.")
+            return
+
+        # Sync to each guild that was given, skipping any the bot can't sync to
+        synced_count = 0
+        for guild in guilds:
+            try:
+                await ctx.bot.tree.sync(guild=guild)
+            except discord.HTTPException:
+                pass
+            else:
+                synced_count += 1
+
+        await ctx.send(f"Synced the tree to {synced_count}/{len(guilds)} servers.")
 
     @commands.hybrid_command()
     async def howdy(self, ctx: Context) -> None:
