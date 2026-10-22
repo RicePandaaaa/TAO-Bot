@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from discord.ext.commands import Context
 
-from DiscordSelect import ProfSelect, StudentSelect, announcements_view, review_view
+from DiscordSelect import ProfSelect, PronounsSelect, StudentSelect, announcements_view, review_view
 
 
 class Roles(commands.Cog):
@@ -10,7 +10,7 @@ class Roles(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.hybrid_command()
+    @commands.hybrid_command(description="Basic command to show buttons for opting in and out of two different announcements roles")
     @commands.has_any_role("TAO Officer")
     async def send_announcements_prompt(self, ctx: Context,
                                         server_role: discord.Role = commands.parameter(description="Server/TAO announcements role"),
@@ -29,7 +29,7 @@ class Roles(commands.Cog):
         await ctx.send(message, view=announcements_view(server_role, board_role))
 
 
-    @commands.hybrid_command()
+    @commands.hybrid_command(description="Basic command to show buttons for opting in and out of TAO review roles")
     @commands.has_any_role("TAO Officer")
     async def send_tao_review_prompt(self, ctx: Context,
                                         review_role: discord.Role = commands.parameter(description="TAO review role")) -> None:
@@ -43,7 +43,7 @@ class Roles(commands.Cog):
         await ctx.send(message, view=review_view(review_role))
 
 
-    @commands.hybrid_command()
+    @commands.hybrid_command(description="Basic command to send welcome prompt and assign roles")
     @commands.has_any_role("TAO Officer")
     async def send_welcome_prompt(self, ctx: Context, 
                                   doing_etam_role:       discord.Role = commands.parameter(description="Role to assign to those still in the ETAM process"),
@@ -64,7 +64,7 @@ class Roles(commands.Cog):
                        " If you are a professor, please email **anthony.ha.pham@tamu.edu** to verify your faculty status. Do note that **your selection can only be changed by a mod**, so please be very careful which option you choose!", view=view)
 
 
-    @commands.hybrid_command()
+    @commands.hybrid_command(description="Basic command to send prompt for professor and class role assignments")
     @commands.has_any_role("TAO Officer")
     async def send_prof_prompt(self, ctx: Context,
                                prompt: str = commands.parameter(description="The prompt text"), 
@@ -102,7 +102,29 @@ class Roles(commands.Cog):
 
         await ctx.send(prompt, view=view)
 
-    @commands.hybrid_command()
+
+    @commands.hybrid_command(description="Basic command to assign pronouns roles")
+    @commands.has_any_role("TAO Officer")
+    async def send_pronouns_prompt(self, ctx: Context, 
+                                  guild_id:              str = commands.parameter(description="The guild ID"), 
+                                  she_her_role:          discord.Role = commands.parameter(description="Role to assign for she/her pronouns"),
+                                  he_him_role:           discord.Role = commands.parameter(description="Role to assign for he/him pronouns"),
+                                  they_them_role:        discord.Role = commands.parameter(description="Role to assign for they/them pronouns"),
+                                  any_pronouns_role:     discord.Role = commands.parameter(description="Role to assign for any pronouns"),
+                                  other_pronouns_role:   discord.Role = commands.parameter(description="Role to assign for other pronouns"),
+                                  ) -> None:
+        
+        """ Basic command to assign pronouns roles """
+
+        view = discord.ui.View(timeout=None)
+        pronouns_select_menu = PronounsSelect(int(guild_id), [she_her_role.id, he_him_role.id, they_them_role.id, 
+                                               any_pronouns_role.id, other_pronouns_role.id])
+        view.add_item(pronouns_select_menu)
+
+        await ctx.send("Select your pronouns!", view=view)
+
+
+    @commands.hybrid_command(description="Basic command to assign PT roles, change username, and inform the user of their new Discord roles")
     @commands.has_any_role("TAO Officer")
     async def make_pt(self, ctx: Context,
                       pt: discord.Member = commands.parameter(description="The user who is getting PT roles"),
