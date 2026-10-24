@@ -18,7 +18,11 @@ logging.basicConfig(level=logging.INFO)
 
 class TAOBot(commands.Bot):
     def __init__(self):
-        super().__init__(intents=intents, command_prefix="tao.", activity=discord.Game(name="tao.help"))
+        super().__init__(
+            intents=intents, 
+            command_prefix="tao.", 
+            activity=discord.Game(name="tao.help"),
+            help_command=None) # disable the default tao.help
         self.db = Database()
 
     async def setup_hook(self):
