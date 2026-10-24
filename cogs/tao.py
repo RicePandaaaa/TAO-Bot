@@ -1,4 +1,5 @@
 import discord
+import help_content
 from discord.ext import commands
 from discord.ext.commands import Context
 
@@ -35,48 +36,13 @@ class TAO(commands.Cog):
     async def links(self, ctx: Context) -> None:
         """ Basic command for obtaining links to the bot """
 
-        # Set up the embed
-        embed = discord.Embed(color=discord.Color.random())
-        embed.set_author(name="ENGR TAO Links")
-
-        # Add values to embed
-        links = {"bento.me":   "https://bento.me/engrtao",
-                 "Discord":    "https://tx.ag/taoserver",
-                 "YouTube":    "https://www.youtube.com/@engrtao",
-                 "Instagram":  "https://instagram.com/tamutao",
-                 "LinkedIn":   "https://www.linkedin.com/company/engr-tao/"}   
-        
-        for key in links.keys():
-            embed.add_field(name=key, value=links[key], inline=False)
-
-        # Send the embed
-        await ctx.send(embed=embed)
+        await ctx.send(embed=help_content.links_card())
 
     @commands.hybrid_command()
     async def taoresources(self, ctx: Context):
         """ Sends an embed with links to TAO materials"""
 
-        # Field contents
-        fields = {
-            "Reviews and Resources from previous and current semesters can be found in the TAO Drive!": "",
-            "TAO Drive": "https://tx.ag/taoreviewdrive",
-            "216/217 Lab Helpful Info": "https://docs.google.com/presentation/d/10ZxiElBy0SsB5s-FwOXpJD-jiORtwtdnGqKG4CxraZE/edit#slide=id.p",
-            "102 Helpful Info": "In progress!",
-            "216 Review (Current Semester)": await self.bot.db.get_config("review_216", "N/A"),
-            "217 Review (Current Semester)": await self.bot.db.get_config("review_217", "N/A"),
-            "102 Review (Current Semester)": await self.bot.db.get_config("review_102", "N/A")
-        }
-
-        # Make the embed
-        embed = discord.Embed(color=discord.Color.dark_red())
-        embed.set_author(name="Resources made by TAO!")
-
-        # Add the fields
-        for field_name in fields:
-            embed.add_field(name=field_name, value=fields[field_name], inline=False)
-
-        # Send the embed
-        await ctx.send(embed=embed)
+        await ctx.send(embed=await help_content.taoresources_card(self.bot.db))
 
     @commands.hybrid_command()
     @commands.has_any_role("TAO Officer")

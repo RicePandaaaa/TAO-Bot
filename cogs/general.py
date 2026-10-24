@@ -1,8 +1,9 @@
 import discord
+import help_content
+from help_views import HelpView
 from discord.ext import commands
 from discord.ext.commands import Context, Greedy
 import typing
-
 
 class General(commands.Cog):
 
@@ -35,65 +36,38 @@ class General(commands.Cog):
                 print(synced)
 
     @commands.hybrid_command()
+    async def help(self, ctx: Context) -> None:
+        """Basic command for information on available commands"""
+
+        await ctx.send(
+            embed=help_content.help_overview(),
+            view=HelpView(),
+            ephemeral=True,
+        )
+
+    @commands.hybrid_command()
     async def howdy(self, ctx: Context) -> None:
         """ Basic command for obtaining info about the bot """
-        
-        await ctx.send(f"Howdy <@{ctx.author.id}>, I was created to assist PTs and professors in managing voice channels for one-on-one " \
-                        "sessions for students and content reviews. I can also provide students with information " \
-                        "related to office hours! Please type `tao.help` for a complete command list!")
+
+        await ctx.send(embed=help_content.howdy_card(ctx.author.id))
     
     @commands.hybrid_command()
     async def code(self, ctx: Context) -> None:
         """ Basic command warning users against posting code for their HW or other assignments """
 
-        await ctx.send(f"Howdy, <@{ctx.author.id}> would like to remind you to **NEVER SHARE ANY PART OF YOUR CODE THAT IS USED IN YOUR SUBMITTED ASSIGNMENTS.**" \
-                       " You can only share code that was created for purposes unrelated to your assignments." \
-                        " Posting your code used in assignments (such as labs and HW) can and will lead to severe consequences.")
+        await ctx.send(embed=help_content.code_card(ctx.author.id))
 
     @commands.hybrid_command()
     async def freshman_information(self, ctx: Context) -> None:
         """ Sends an embed with links to the information for freshmen """
 
-        # Field contents
-        fields = {
-            "ETAM Information": "https://engineering.tamu.edu/academics/undergraduate/entry-to-a-major/index.html",
-            "University Writing Center": "https://writingcenter.tamu.edu/",
-            "Academic Success Center": "https://engineering.tamu.edu/academics/academic-support-services.html",
-            "Texas A&M Main Calendar": "https://calendar.tamu.edu/",
-            "Student Interest Events": "https://calendar.tamu.edu/student-interest/all",
-            "University Art Galleries": "https://uart.tamu.edu/"
-        }
-
-        # Make the embed
-        embed = discord.Embed(color=discord.Color.dark_red())
-        embed.set_author(name="Help Centers")
-
-        # Add the fields
-        for field_name in fields:
-            embed.add_field(name=field_name, value=fields[field_name], inline=False)
-
-        # Send the embed
-        await ctx.send(embed=embed)
+        await ctx.send(embed=help_content.freshman_information_card())
     
     @commands.hybrid_command()
     async def mental_health_resources(self, ctx: Context) -> None:
         """ Sends an embed with links to mental health resources """
 
-        fields = {
-            "University Health Services": "https://mentalhealth.tamu.edu/students/index.html",
-            "TELUS Health Student Support App (24/7)": "https://uhs.tamu.edu/mental-health/student-support.html",
-            "Texas A&M University Helplines": "https://mentalhealth.tamu.edu/crisis-resources.html",
-            "National Suicide and Crisis Lifeline (24/7)": "[Call 988](tel:988)",
-            "Crisis Text Hotline": "[Text HOME to 741741](sms:741741?body=HOME)"
-        }
-
-        embed = discord.Embed(color=discord.Color.dark_red())
-        embed.set_author(name="Mental Health Resources")
-
-        for field_name in fields:
-            embed.add_field(name=field_name, value=fields[field_name], inline=False)
-
-        await ctx.send(embed=embed)
+        await ctx.send(embed=help_content.mental_health_resources_card())
 
    
 
