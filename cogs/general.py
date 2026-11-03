@@ -95,6 +95,27 @@ class General(commands.Cog):
 
         await ctx.send(embed=embed)
 
+    @commands.hybrid_command()
+    async def career_fair_resources(self, ctx: Context) -> None:
+        """ Sends an embed with links to career fair resources """
+
+        fields = {
+            "Career Fair List": "https://careercenter.tamu.edu/events-and-programs/career-fairs/",
+            "SEC Career Fair": "https://www.careerfair.sec.tamu.edu/",
+            "Career Fair Preparation": "https://careercenter.tamu.edu/current-students/find-an-internship-job/career-fair-preparation/",
+            "Professional Attire Guides": "https://careercenter.tamu.edu/current-students/interviews-and-offers/dress-for-success/",
+            "Career Closet": "https://careercloset.tamu.edu/",
+            "Free Professional Headshots": "https://careercenter.tamu.edu/about/services/#professional-photo-pod",
+        }
+
+        embed = discord.Embed(color=discord.Color.dark_red())
+        embed.set_author(name="Career Fair Resources")
+        embed.description = "Career fairs are in-person or virtual events where students connect with employer representatives to explore internships, entry-level jobs, and build professional networks. For more information on preparing for and attending career fairs, visit the [Career Center](https://careercenter.tamu.edu/about/)."
+
+        for field_name in fields:
+            embed.add_field(name=field_name, value=fields[field_name], inline=False)
+
+        await ctx.send(embed=embed)
    
 
 async def setup(bot):
