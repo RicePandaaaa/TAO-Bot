@@ -95,6 +95,24 @@ class General(commands.Cog):
 
         await ctx.send(embed=embed)
 
+    @commands.hybrid_command()
+    async def registration(self, ctx: Context) -> None:
+        """ Sends an embed with information about registration """
+
+        fields = {
+            "Reminders/Calendar": "...",
+            "Important Places": "...",
+            "Important People": "...",
+        }
+
+        embed = discord.Embed(color=discord.Color.dark_red())
+        embed.set_author(name="Registration Resources")
+        embed.description = "..."
+
+        for field_name in fields:
+            embed.add_field(name=field_name, value=fields[field_name], inline=False)
+
+        await ctx.send(embed=embed)
    
 
 async def setup(bot):
