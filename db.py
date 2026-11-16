@@ -50,17 +50,28 @@ CONFIG_KEYS = (
     "pt_log_channel",
     "private_category",
     "archive_category",
+    "room_close_role",
     "review_216",
     "review_217",
     "review_102",
 )
 
-# Values seeded on first run so behavior matches the previously hardcoded IDs
+# Values seeded on first run so behavior matches the previously hardcoded IDs.
+# These are IDs from the ENGR TAO server and are only used when a key is missing from the
+# database: change live values with `config_set` (or `verifyupdate`), not here.
 DEFAULT_CONFIG = {
-    "welcome_role_1": "1147655175209754764",
-    "welcome_role_2": "1147655249784492113",
-    "pt_log_channel": "1022982386557923369",
-    "private_category": "1488619460897280222",
+    # Roles given to every new member (on_member_join in bot.py)
+    "welcome_role_1": "1147655175209754764",    # "Announcements" role: server/TAO club announcement pings
+    "welcome_role_2": "1147655249784492113",    # "Bulletin Board" role: bulletin board channel pings
+
+    "pt_log_channel": "1022982386557923369",    # #bot-log channel: `make_pt` usage is logged here
+    "private_category": "1488619460897280222",  # Category where `room` creates private PT/student channels
+    # "archive_category" has no default: set it with `config_set` before `close`/`archive_rooms` work
+
+    # PT/faculty verification contact shown in `send_verification_prompt`
+    "verify_name": "Alex",
+    "verify_user_id": "367771798508404736",     # Alex's Discord user ID
+    "verify_email": "alex-gonce@tamu.edu",
 }
 
 
@@ -69,7 +80,7 @@ class Database:
 
     def __init__(self, path: str = "data/tao.db"):
         self.path = path
-        self.conn: aiosqlite.Connection = None  # type: ignore[assignment]
+        self.conn: aiosqlite.Connection = None
 
     async def init(self) -> None:
         """ Opens the connection, creates tables, and runs one-time migrations """

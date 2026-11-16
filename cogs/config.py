@@ -12,10 +12,16 @@ ConfigKey = typing.Literal[
     "pt_log_channel",
     "private_category",
     "archive_category",
+    "room_close_role",
     "review_216",
     "review_217",
     "review_102",
 ]
+
+
+def is_role_key(key: str) -> bool:
+    """ Whether a config key holds a role ID """
+    return key.startswith("welcome_role") or key.endswith("_role")
 
 
 class Config(commands.Cog):
@@ -35,7 +41,7 @@ class Config(commands.Cog):
             return
 
         # Validate that ID-typed keys point to a real role/channel/category in this server
-        if key.startswith("welcome_role"):
+        if is_role_key(key):
             if not value.isdigit() or ctx.guild.get_role(int(value)) is None:
                 await ctx.send(f"\"{value}\" is not the ID of a role in this server!")
                 return
@@ -84,7 +90,7 @@ class Config(commands.Cog):
         if ctx.guild is None or not value.isdigit():
             return value
 
-        if key.startswith("welcome_role"):
+        if is_role_key(key):
             role = ctx.guild.get_role(int(value))
             return f"{role.mention} ({value})" if role is not None else f"{value} (role not found!)"
 
