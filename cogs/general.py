@@ -51,9 +51,9 @@ class General(commands.Cog):
     async def howdy(self, ctx: Context) -> None:
         """ Basic command for obtaining info about the bot """
         
-        await ctx.send(f"Howdy <@{ctx.author.id}>, I was created to assist PTs and professors in managing voice channels for one-on-one " \
-                        "sessions for students and content reviews. I can also provide students with information " \
-                        "related to office hours! Please type `tao.help` for a complete command list!")
+        await ctx.send(f"Howdy <@{ctx.author.id}>, I'm the ENGR TAO server's bot! I handle role selection, private rooms " \
+                        "for one-on-one help with PTs, and links to resources for freshmen, PTs, and TAO reviews. " \
+                        "Please type `tao.help` for a complete command list!")
     
     @commands.hybrid_command()
     async def code(self, ctx: Context) -> None:
