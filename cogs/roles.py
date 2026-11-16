@@ -1,8 +1,18 @@
+import logging
+
 import discord
 from discord.ext import commands
 from discord.ext.commands import Context
 
-from DiscordSelect import ProfSelect, PronounsSelect, StudentSelect, announcements_view, review_view
+from DiscordSelect import (PRONOUN_ROLES_KEY, ProfSelect, PronounsSelect, StudentSelect,
+                           announcements_view, review_view)
+from views.confirm import ConfirmView
+
+MAX_NICKNAME_LENGTH = 32
+
+# Discord's limits for forum channel tags
+MAX_FORUM_TAGS = 20
+MAX_TAG_NAME_LENGTH = 20
 
 class Roles(commands.Cog):
 
@@ -66,10 +76,13 @@ class Roles(commands.Cog):
     @commands.hybrid_command(description="Basic command to send prompt for professor and class role assignments")
     @commands.has_any_role("TAO Officer")
     async def send_prof_prompt(self, ctx: Context,
-                               prompt: str = commands.parameter(description="The prompt text"), 
-                               class_name: str = commands.parameter(description="Name of the class"),
-                               class_role: discord.Role = commands.parameter(description="Role associated with the class")) -> None:
-        
+                               prompt: str = commands.parameter(description="The prompt text"),
+                               class_name: str = commands.parameter(description="Name of the class, as used in set_professors"),
+                               class_role: discord.Role = commands.parameter(description="Role associated with the class"),
+                               forum: discord.ForumChannel = commands.parameter(description="Forum that gets a tag per professor"),
+                               lab_forum: discord.ForumChannel | None = commands.parameter(
+                                   default=None, description="Optional second forum (e.g. the lab forum) that gets the same tags")) -> None:
+
         """ Basic command to send prompt for professor and class role assignments """
         # Defer since this can take a while
         await ctx.defer()
@@ -78,21 +91,39 @@ class Roles(commands.Cog):
             await ctx.send("This command can only be used in a server.", ephemeral=True)
             return
 
-        # Invalid class name
-        category = discord.utils.get(ctx.guild.categories, name=class_name)
-        if category is None:
-            await ctx.send("This is an invalid class name!")
-            return
-
         # No professors configured for this class
         professors = await self.bot.db.get_professors(class_name)
         if not professors:
             await ctx.send(f"There are no professors configured for \"{class_name}\"! Use `set_professors` first.")
             return
 
-        # Set up the professors' roles and channels
-        role_names = await self.setup_professor_roles(class_name, professors, ctx.guild)
-        await self.setup_prof_channels(category, role_names, class_role, ctx.guild)
+        # Each professor becomes a forum tag, and Discord caps tag names at 20 characters
+        too_long = [prof for prof in professors if len(prof) > MAX_TAG_NAME_LENGTH]
+        if too_long:
+            await ctx.send(f"These professor names are longer than {MAX_TAG_NAME_LENGTH} characters and can't be forum tags: "
+                           f"{', '.join(too_long)}. Shorten them (e.g. last name only) with `set_professors`.")
+            return
+
+        forums = [forum] if lab_forum is None or lab_forum == forum else [forum, lab_forum]
+
+        # Check every forum's tag limit before changing anything, so a failure leaves the server untouched
+        plans = {f: self.plan_forum_tags(f, professors) for f in forums}
+        for f, (missing, stale) in plans.items():
+            if len(f.available_tags) + len(missing) > MAX_FORUM_TAGS:
+                await ctx.send(f"Adding tags for {', '.join(missing)} would put {f.mention} over Discord's limit of "
+                               f"{MAX_FORUM_TAGS} tags per forum. Delete unused tags in its settings first"
+                               + (f" (these match no current professor: {', '.join(stale)})." if stale else "."))
+                return
+
+        # Set up the professors' roles and each forum's professor tags
+        await self.setup_professor_roles(class_name, professors, ctx.guild)
+        try:
+            for f, (missing, _) in plans.items():
+                await self.apply_forum_tags(f, missing, class_name)
+        except discord.HTTPException:
+            logging.exception(f"Could not edit the forum tags for {class_name}")
+            await ctx.send("Could not edit the forum tags. Make sure the bot can manage those forum channels.")
+            return
 
         # Go through the professors and create the select menu
         view = discord.ui.View(timeout=None)
@@ -101,11 +132,21 @@ class Roles(commands.Cog):
 
         await ctx.send(prompt, view=view)
 
+        # Report the forum changes to the officer only
+        lines = []
+        for f, (missing, stale) in plans.items():
+            line = f"{f.mention}: " + (f"added tags {', '.join(missing)}." if missing else "all professors already had tags.")
+            if stale:
+                line += f" These tags don't match a current professor: {', '.join(stale)}."
+            lines.append(line)
+        if any(stale for _, stale in plans.values()):
+            lines.append(f"Delete tags you no longer need in the forum's settings (the limit is {MAX_FORUM_TAGS} per forum).")
+        await ctx.send("\n".join(lines), ephemeral=True)
+
 
     @commands.hybrid_command(description="Basic command to assign pronouns roles")
     @commands.has_any_role("TAO Officer")
-    async def send_pronouns_prompt(self, ctx: Context, 
-                                  guild_id:              str = commands.parameter(description="The guild ID"), 
+    async def send_pronouns_prompt(self, ctx: Context,
                                   she_her_role:          discord.Role = commands.parameter(description="Role to assign for she/her pronouns"),
                                   he_him_role:           discord.Role = commands.parameter(description="Role to assign for he/him pronouns"),
                                   they_them_role:        discord.Role = commands.parameter(description="Role to assign for they/them pronouns"),
@@ -115,10 +156,17 @@ class Roles(commands.Cog):
         
         """ Basic command to assign pronouns roles """
 
+        if ctx.guild is None:
+            await ctx.send("This command can only be used in a server.", ephemeral=True)
+            return
+
+        role_ids = [she_her_role.id, he_him_role.id, they_them_role.id, any_pronouns_role.id, other_pronouns_role.id]
+
+        # Stored so the menu still knows its roles after a restart (they don't fit in the custom_id)
+        await self.bot.db.set_config(PRONOUN_ROLES_KEY, ",".join(str(role_id) for role_id in role_ids))
+
         view = discord.ui.View(timeout=None)
-        pronouns_select_menu = PronounsSelect(int(guild_id), [she_her_role.id, he_him_role.id, they_them_role.id, 
-                                               any_pronouns_role.id, other_pronouns_role.id])
-        view.add_item(pronouns_select_menu)
+        view.add_item(PronounsSelect(ctx.guild.id, role_ids))
 
         await ctx.send("Select your pronouns!", view=view)
 
@@ -146,11 +194,10 @@ class Roles(commands.Cog):
 
         # Change name
         if real_name is not None:
-            # New nickname would exceed max
-            if len(f"{real_name} | PT") > 32:
-                await pt.edit(nick="REAL NAME | PT")
-            else:
-                await pt.edit(nick=f"{real_name} | PT")
+            # Trim the name so the nickname stays within Discord's limit
+            suffix = " | PT"
+            name = real_name.strip()[:MAX_NICKNAME_LENGTH - len(suffix)].rstrip()
+            await pt.edit(nick=f"{name}{suffix}")
 
         # Notify the PT and remind the officer to manually assign professor roles
         await ctx.send(f"\n<@{ctx.author.id}>, please remember to manually assign them their professor roles if they are supposed to have any!", ephemeral=True)
@@ -184,39 +231,32 @@ class Roles(commands.Cog):
 
         return role_names
         
-    async def setup_prof_channels(self, category: discord.CategoryChannel, 
-                                  professors: list[str],
-                                  class_role: discord.Role,
-                                  guild: discord.Guild) -> None:
-        """ 
-        Helper function to help set up channels for professors
-
-        :param discord.CategoryChannel category: The channel category where the channels will belong
-        :param list[str] professors: The list of names of the professors
-        :param discord.Role class_role: The role associated with the class the professors teach
-        :param discord.Guild guild: The guild associated with the server
+    @staticmethod
+    def plan_forum_tags(forum: discord.ForumChannel, professors: list[str]) -> tuple[list[str], list[str]]:
         """
+        Compares a forum's tags with the professor list (case-insensitive) without changing anything
 
-        # Go through the professors and generate channels
-        for professor in professors:
-            # Get the professor role
-            professor_role = discord.utils.get(guild.roles, name=professor)
+        :param discord.ForumChannel forum: The forum whose tags are checked
+        :param list[str] professors: The list of professor names for the class
+        :return: Professors that still need a tag, and existing tags that match no current professor
+        """
+        existing_names = {tag.name.lower() for tag in forum.available_tags}
+        professor_names = {prof.lower() for prof in professors}
 
-            if professor_role is None:
-                continue
+        missing = [prof for prof in professors if prof.lower() not in existing_names]
+        stale = [tag.name for tag in forum.available_tags if tag.name.lower() not in professor_names]
+        return missing, stale
 
-            if not discord.utils.get(category.text_channels, name="-".join(professor.split(" ")).lower()):
-                # Only allow students of the same professor to view the channel
-                officer_role = discord.utils.get(guild.roles, name="TAO Officer")
-                overwrites: dict[discord.Role | discord.Member, discord.PermissionOverwrite] = {
-                    guild.default_role: discord.PermissionOverwrite(read_messages=False),
-                    class_role: discord.PermissionOverwrite(read_messages=False),
-                    professor_role: discord.PermissionOverwrite(read_messages=True),
-                }
-                if officer_role is not None:
-                    overwrites[officer_role] = discord.PermissionOverwrite(read_messages=True)
-
-                await category.create_text_channel(name=professor, overwrites=overwrites)
+    @staticmethod
+    async def apply_forum_tags(forum: discord.ForumChannel, missing: list[str], class_name: str) -> None:
+        """
+        Adds the missing professor tags and makes posts require a tag. Existing tags are never removed,
+        so manually added tags (e.g. "Solved") and tags on old posts are kept.
+        """
+        if missing or not forum.flags.require_tag:
+            await forum.edit(available_tags=list(forum.available_tags) + [discord.ForumTag(name=prof) for prof in missing],
+                             require_tag=False,
+                             reason=f"Professor tags for {class_name}")
 
     @commands.hybrid_command()
     @commands.has_any_role("TAO Officer")
@@ -227,13 +267,37 @@ class Roles(commands.Cog):
         
         """ Basic command to switch everyone with a role with another """
 
-        # Get all members with the old role
-        members = old_role.members
+        # Snapshot now so the list can't change between confirming and switching
+        members = list(old_role.members)
+        if not members:
+            await ctx.send(f"Nobody has the \"{old_role.name}\" role!", ephemeral=True)
+            return
 
-        # Switch the roles
+        view = ConfirmView(ctx.author.id)
+        prompt = await ctx.send(f"This will move **{len(members)}** member(s) from \"{old_role.name}\" to \"{new_role.name}\". Continue?",
+                                view=view)
+        await view.wait()
+
+        if view.value is None:
+            await prompt.edit(content="Timed out, no roles were changed.", view=None)
+            return
+        if not view.value:
+            return
+
+        await prompt.edit(content=f"Switching roles for {len(members)} member(s)...")
+
+        failed = []
         for member in members:
-            await member.remove_roles(old_role)
-            await member.add_roles(new_role)
+            try:
+                await member.remove_roles(old_role)
+                await member.add_roles(new_role)
+            except discord.HTTPException:
+                failed.append(member.mention)
+
+        result = f"Moved {len(members) - len(failed)}/{len(members)} member(s) from \"{old_role.name}\" to \"{new_role.name}\"."
+        if failed:
+            result += f"\nFailed for: {', '.join(failed)}"
+        await prompt.edit(content=result)
 
 async def setup(bot):
     await bot.add_cog(Roles(bot))

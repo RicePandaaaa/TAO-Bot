@@ -1,12 +1,12 @@
+import logging
 import re
 import discord
 
-# All items in this module are DynamicItems: their state is encoded entirely in their
-# custom_id, so they keep working after a bot restart (registered in bot.setup_hook).
 
+# Additional roles a student may pick up
 STUDENT_STATUSES = ["Doing ETAM", "Done with ETAM", "Visiting Student", "Alumni"]
 PRONOUNS = ["She/Her", "He/Him", "They/Them", "Any Pronouns", "Other Pronouns"]
-pronouns_cache = {} # {guild_id: [...role_ids], ...}
+PRONOUN_ROLES_KEY = "pronoun_roles"
 
 
 class ProfSelect(discord.ui.DynamicItem[discord.ui.Select],
@@ -33,7 +33,8 @@ class ProfSelect(discord.ui.DynamicItem[discord.ui.Select],
     async def from_custom_id(cls, interaction: discord.Interaction, item: discord.ui.Select, match: re.Match[str]):
         """ Rebuilds the select menu from its custom_id after a restart """
         class_name = match["class_name"]
-        professors = await interaction.client.db.get_professors(class_name)  # type: ignore[attr-defined]
+        professors = await interaction.client.db.get_professors(class_name)
+        
         return cls(class_name, int(match["class_role_id"]), professors)
 
     async def callback(self, interaction: discord.Interaction):
@@ -143,11 +144,10 @@ class PronounsSelect(discord.ui.DynamicItem[discord.ui.Select],
         Initialize the select menu with the names of pronouns
 
         :param int guild_id: The guild's ID
-        :param list[int] role_ids: The role IDs matching PRONOUNS, in order
+        :param list[int] role_ids: The role IDs matching PRONOUNS, in order (stored under PRONOUN_ROLES_KEY)
         """
         self.role_ids = role_ids
-        self.guild_id = guild_id 
-        pronouns_cache[guild_id] = role_ids
+        self.guild_id = guild_id
 
         super().__init__(discord.ui.Select(
             options=[discord.SelectOption(label=pronouns) for pronouns in PRONOUNS],
@@ -158,8 +158,9 @@ class PronounsSelect(discord.ui.DynamicItem[discord.ui.Select],
 
     @classmethod
     async def from_custom_id(cls, interaction: discord.Interaction, item: discord.ui.Select, match: re.Match[str]):
-        guild_id = int(match.group("guild_id"))
-        return cls(guild_id, pronouns_cache.get(guild_id, []))
+        stored = await interaction.client.db.get_config(PRONOUN_ROLES_KEY)  # type: ignore[attr-defined]
+        role_ids = [int(role_id) for role_id in stored.split(",")] if stored else []
+        return cls(int(match["guild_id"]), role_ids)
 
     async def callback(self, interaction: discord.Interaction) -> None:
         """
@@ -174,32 +175,30 @@ class PronounsSelect(discord.ui.DynamicItem[discord.ui.Select],
         if not isinstance(user, discord.Member) or interaction.guild is None:
             return await interaction.response.send_message(content="This command can only be used in a server!", ephemeral=True)
 
-        status_role_dict = {status: interaction.guild.get_role(role_id)
-                            for status, role_id in zip(PRONOUNS, self.role_ids)}
-        
+        pronoun_roles = {pronouns: interaction.guild.get_role(role_id)
+                         for pronouns, role_id in zip(PRONOUNS, self.role_ids)}
+
+        # Roles were never stored, or one has since been deleted
+        if len(pronoun_roles) != len(PRONOUNS) or None in pronoun_roles.values():
+            return await interaction.response.send_message(content="This prompt is outdated, please ask an officer to repost it!", ephemeral=True)
+
+        selected_roles = [pronoun_roles[pronouns] for pronouns in self.item.values]
+        unselected_roles = [role for role in user.roles
+                            if role in pronoun_roles.values() and role not in selected_roles]
+
         try:
-            user_pronouns_roles = [role for role in user.roles if (role in status_role_dict.values())]
-            selected_roles = [role_from_status 
-                              for role_name in self.item.values 
-                              if ((role_from_status := status_role_dict[role_name]) is not None)]
-
-            unselected_roles = []
-            for role in user_pronouns_roles:
-                if (role not in selected_roles): #NOTE: no need to check against None if user has these roles
-                    unselected_roles.append(role)
-
             await user.add_roles(*selected_roles)
             await user.remove_roles(*unselected_roles)
+        except discord.HTTPException:
+            logging.exception("Failed to update pronoun roles for %s", user)
+            return await interaction.response.send_message(content="Something went wrong updating your roles, please let an officer know!", ephemeral=True)
 
-            if len(self.item.values) == 0:
-                await interaction.response.send_message(
-                    content=f"You have been unassigned all pronouns roles!", ephemeral=True)
-            else:
-                await interaction.response.send_message(
-                    content=f"You have been assigned the {', '.join(self.item.values)} {"roles" if len(self.item.values) > 1 else "role"}!", ephemeral=True)
-        except Exception as e:
-            print("CAUGHT EXCEPTION ",e)
-            return await interaction.response.send_message(content="This prompt is outdated, please ask an officer to repost it!", ephemeral=True)
+        if len(self.item.values) == 0:
+            await interaction.response.send_message(
+                content="You have been unassigned all pronouns roles!", ephemeral=True)
+        else:
+            await interaction.response.send_message(
+                content=f"You have been assigned the {', '.join(self.item.values)} {'roles' if len(self.item.values) > 1 else 'role'}!", ephemeral=True)
 
 
 class AnnouncementsButton(discord.ui.DynamicItem[discord.ui.Button],
