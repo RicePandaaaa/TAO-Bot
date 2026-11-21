@@ -1,7 +1,18 @@
+import typing
+
 import discord
+from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Context, Greedy
-import typing
+
+from checks import OFFICER_ROLE, audience_of
+
+# Sections of /help, in order, keyed by the `audience` set in each command's extras
+HELP_SECTIONS = {
+    "everyone": "Commands for everyone",
+    "staff": "For PTs, profs and officers",
+    "officer": "For officers",
+}
 
 
 class General(commands.Cog):
@@ -12,12 +23,12 @@ class General(commands.Cog):
     # Prefix-only on purpose: a slash version would be visible to everyone and can't be used to fix a broken sync
     @commands.command()
     @commands.guild_only()
-    @commands.has_any_role('TAO Officer')
+    @commands.has_any_role(OFFICER_ROLE)
     async def sync(self, ctx: Context,
                    guilds: Greedy[discord.Object] = commands.parameter(default=None, description="A list of guilds to go through"),
                    spec: typing.Optional[typing.Literal["~", "*", "^"]] = commands.parameter(default=None, description="Type of sync to be performed")) -> None:
         """
-        Syncs the hybrid commands (allows for usage of slash commands), from discord.py server
+        Syncs the slash commands with Discord (run this after adding, removing or renaming commands)
         """
         if not guilds:
             if spec == "~":
@@ -47,89 +58,42 @@ class General(commands.Cog):
 
         await ctx.send(f"Synced the tree to {synced_count}/{len(guilds)} servers.")
 
-    @commands.hybrid_command()
-    async def howdy(self, ctx: Context) -> None:
-        """ Basic command for obtaining info about the bot """
-        
-        await ctx.send(f"Howdy <@{ctx.author.id}>, I'm the ENGR TAO server's bot! I handle role selection, private rooms " \
-                        "for one-on-one help with PTs, and links to resources for freshmen, PTs, and TAO reviews. " \
-                        "Please type `tao.help` for a complete command list!")
-    
-    @commands.hybrid_command()
-    async def code(self, ctx: Context) -> None:
-        """ Basic command warning users against posting code for their HW or other assignments """
+    @app_commands.command(name="help", extras={"audience": "everyone"})
+    async def help(self, interaction: discord.Interaction) -> None:
+        """ What this bot does and the commands you can use """
 
-        await ctx.send(f"Howdy, <@{ctx.author.id}> would like to remind you to **NEVER SHARE ANY PART OF YOUR CODE THAT IS USED IN YOUR SUBMITTED ASSIGNMENTS.**" \
-                       " You can only share code that was created for purposes unrelated to your assignments." \
-                        " Posting your code used in assignments (such as labs and HW) can and will lead to severe consequences.")
+        audiences = audience_of(interaction.user)
+        sections: dict[str, list[str]] = {audience: [] for audience in HELP_SECTIONS}
 
-    @commands.hybrid_command()
-    async def freshman_information(self, ctx: Context) -> None:
-        """ Sends an embed with links to the information for freshmen """
+        # Built from the registered commands, so it never goes out of date
+        for command in sorted(self.bot.tree.get_commands(), key=lambda c: c.name):
+            group_audience = command.extras.get("audience", "everyone")
+            subcommands = command.commands if isinstance(command, app_commands.Group) else [command]
 
-        # Field contents
-        fields = {
-            "ETAM Information": "https://engineering.tamu.edu/academics/undergraduate/entry-to-a-major/index.html",
-            "University Writing Center": "https://writingcenter.tamu.edu/",
-            "Academic Success Center": "https://engineering.tamu.edu/academics/academic-support-services.html",
-            "Texas A&M Main Calendar": "https://calendar.tamu.edu/",
-            "Student Interest Events": "https://calendar.tamu.edu/student-interest/all",
-            "University Art Galleries": "https://uart.tamu.edu/"
-        }
+            for sub in subcommands:
+                audience = sub.extras.get("audience", group_audience)
+                if audience in audiences:
+                    sections[audience].append(f"`/{sub.qualified_name}`: {sub.description}")
 
-        # Make the embed
-        embed = discord.Embed(color=discord.Color.dark_red())
-        embed.set_author(name="Help Centers")
+        description = ("Howdy! I'm the ENGR TAO server's bot. I handle role selection, private rooms for one-on-one "
+                       "help with PTs, and links to resources for freshmen, PTs, and TAO reviews.")
+        for audience, title in HELP_SECTIONS.items():
+            if sections[audience]:
+                description += f"\n\n**{title}**\n" + "\n".join(sections[audience])
 
-        # Add the fields
-        for field_name in fields:
-            embed.add_field(name=field_name, value=fields[field_name], inline=False)
+        embed = discord.Embed(color=discord.Color.dark_red(), description=description)
+        embed.set_author(name="TAO Bot Help")
+        await interaction.response.send_message(embed=embed, ephemeral=True)
 
-        # Send the embed
-        await ctx.send(embed=embed)
-    
-    @commands.hybrid_command()
-    async def mental_health_resources(self, ctx: Context) -> None:
-        """ Sends an embed with links to mental health resources """
+    @app_commands.command(name="code", extras={"audience": "everyone"})
+    async def code(self, interaction: discord.Interaction) -> None:
+        """ Reminds everyone never to share code from their assignments """
 
-        fields = {
-            "University Health Services": "https://mentalhealth.tamu.edu/students/index.html",
-            "TELUS Health Student Support App (24/7)": "https://uhs.tamu.edu/mental-health/student-support.html",
-            "Texas A&M University Helplines": "https://mentalhealth.tamu.edu/crisis-resources.html",
-            "National Suicide and Crisis Lifeline (24/7)": "[Call 988](tel:988)",
-            "Crisis Text Hotline": "[Text HOME to 741741](sms:741741?body=HOME)"
-        }
+        await interaction.response.send_message(
+            f"Howdy, {interaction.user.mention} would like to remind you to **NEVER SHARE ANY PART OF YOUR CODE THAT IS USED IN YOUR SUBMITTED ASSIGNMENTS.**"
+            " You can only share code that was created for purposes unrelated to your assignments."
+            " Posting your code used in assignments (such as labs and HW) can and will lead to severe consequences.")
 
-        embed = discord.Embed(color=discord.Color.dark_red())
-        embed.set_author(name="Mental Health Resources")
-
-        for field_name in fields:
-            embed.add_field(name=field_name, value=fields[field_name], inline=False)
-
-        await ctx.send(embed=embed)
-
-    @commands.hybrid_command()
-    async def career_fair_resources(self, ctx: Context) -> None:
-        """ Sends an embed with links to career fair resources """
-
-        fields = {
-            "Career Fair List": "https://careercenter.tamu.edu/events-and-programs/career-fairs/",
-            "SEC Career Fair": "https://www.careerfair.sec.tamu.edu/",
-            "Career Fair Preparation": "https://careercenter.tamu.edu/current-students/find-an-internship-job/career-fair-preparation/",
-            "Professional Attire Guides": "https://careercenter.tamu.edu/current-students/interviews-and-offers/dress-for-success/",
-            "Career Closet": "https://careercloset.tamu.edu/",
-            "Free Professional Headshots": "https://careercenter.tamu.edu/about/services/#professional-photo-pod",
-        }
-
-        embed = discord.Embed(color=discord.Color.dark_red())
-        embed.set_author(name="Career Fair Resources")
-        embed.description = "Career fairs are in-person or virtual events where students connect with employer representatives to explore internships, entry-level jobs, and build professional networks. For more information on preparing for and attending career fairs, visit the [Career Center](https://careercenter.tamu.edu/about/)."
-
-        for field_name in fields:
-            embed.add_field(name=field_name, value=fields[field_name], inline=False)
-
-        await ctx.send(embed=embed)
-   
 
 async def setup(bot):
     await bot.add_cog(General(bot))
