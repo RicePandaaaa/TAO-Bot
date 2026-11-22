@@ -1,10 +1,12 @@
 import typing
 
 import discord
+from discord import app_commands
 from discord.ext import commands
-from discord.ext.commands import Context
 
-from db import CONFIG_KEYS
+from core.checks import OFFICER_PERMISSIONS, is_officer
+from core.db import CONFIG_KEYS
+from core.utils import reply
 
 ConfigKey = typing.Literal[
     "welcome_role_1",
@@ -12,61 +14,68 @@ ConfigKey = typing.Literal[
     "pt_log_channel",
     "private_category",
     "archive_category",
+    "room_close_role",
     "review_216",
     "review_217",
     "review_102",
 ]
 
 
+def is_role_key(key: str) -> bool:
+    """ Whether a config key holds a role ID """
+    return key.startswith("welcome_role") or key.endswith("_role")
+
+
 class Config(commands.Cog):
+    """ /config: the bot's settings, changed live without a restart """
+
+    config = app_commands.Group(name="config", description="View and change the bot's settings",
+                                default_permissions=OFFICER_PERMISSIONS, guild_only=True, extras={"audience": "officer"})
 
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.hybrid_command()
-    @commands.has_any_role("TAO Officer")
-    async def config_set(self, ctx: Context,
-                         key: ConfigKey = commands.parameter(description="The config key to change"),
-                         value: str = commands.parameter(description="The new value (an ID for role/channel/category keys)")):
-        """ Sets a config value, taking effect immediately without a restart """
-
-        if ctx.guild is None:
-            await ctx.send("This command can only be used in a server.", ephemeral=True)
-            return
+    @config.command(name="set")
+    @is_officer()
+    @app_commands.describe(key="The setting to change", value="The new value (an ID for role/channel/category settings)")
+    async def set_value(self, interaction: discord.Interaction, key: ConfigKey, value: str) -> None:
+        """ Changes a setting, taking effect immediately """
+        assert interaction.guild is not None
+        guild = interaction.guild
 
         # Validate that ID-typed keys point to a real role/channel/category in this server
-        if key.startswith("welcome_role"):
-            if not value.isdigit() or ctx.guild.get_role(int(value)) is None:
-                await ctx.send(f"\"{value}\" is not the ID of a role in this server!")
+        if is_role_key(key):
+            if not value.isdigit() or guild.get_role(int(value)) is None:
+                await reply(interaction, f"\"{value}\" is not the ID of a role in this server!")
                 return
 
         elif key.endswith("_channel"):
-            if not value.isdigit() or not isinstance(ctx.guild.get_channel(int(value)), discord.TextChannel):
-                await ctx.send(f"\"{value}\" is not the ID of a text channel in this server!")
+            if not value.isdigit() or not isinstance(guild.get_channel(int(value)), discord.TextChannel):
+                await reply(interaction, f"\"{value}\" is not the ID of a text channel in this server!")
                 return
 
         elif key.endswith("_category"):
-            if not value.isdigit() or not isinstance(ctx.guild.get_channel(int(value)), discord.CategoryChannel):
-                await ctx.send(f"\"{value}\" is not the ID of a category in this server!")
+            if not value.isdigit() or not isinstance(guild.get_channel(int(value)), discord.CategoryChannel):
+                await reply(interaction, f"\"{value}\" is not the ID of a category in this server!")
                 return
 
         old_value = await self.bot.db.get_config(key, "N/A")
         await self.bot.db.set_config(key, value)
-        await ctx.send(f"Config \"{key}\" has been changed from \"{old_value}\" to \"{value}\"!")
+        await reply(interaction, f"\"{key}\" changed from \"{old_value}\" to \"{value}\".")
 
-    @commands.hybrid_command()
-    @commands.has_any_role("TAO Officer")
-    async def config_get(self, ctx: Context,
-                         key: ConfigKey = commands.parameter(description="The config key to look up")):
-        """ Shows the current value of a config key """
+    @config.command(name="get")
+    @is_officer()
+    @app_commands.describe(key="The setting to look up")
+    async def get_value(self, interaction: discord.Interaction, key: ConfigKey) -> None:
+        """ Shows the current value of one setting """
 
         value = await self.bot.db.get_config(key)
-        await ctx.send(f"Config \"{key}\" is currently set to \"{value if value is not None else 'N/A'}\".")
+        await reply(interaction, f"\"{key}\" is currently set to \"{value if value is not None else 'N/A'}\".")
 
-    @commands.hybrid_command()
-    @commands.has_any_role("TAO Officer")
-    async def config_list(self, ctx: Context):
-        """ Shows all config keys and their current values """
+    @config.command(name="list")
+    @is_officer()
+    async def list_values(self, interaction: discord.Interaction) -> None:
+        """ Shows every setting and its current value """
 
         config = await self.bot.db.all_config()
 
@@ -75,21 +84,41 @@ class Config(commands.Cog):
 
         for key in CONFIG_KEYS:
             value = config.get(key, "N/A")
-            embed.add_field(name=key, value=self.format_value(ctx, key, value), inline=False)
+            embed.add_field(name=key, value=self.format_value(interaction.guild, key, value), inline=False)
 
-        await ctx.send(embed=embed)
+        await reply(interaction, embed=embed)
 
-    def format_value(self, ctx: Context, key: str, value: str) -> str:
+    @config.command(name="verification")
+    @is_officer()
+    @app_commands.describe(name="Name of the officer PTs and faculty should contact",
+                           user="That officer's Discord account",
+                           email="Their official TAMU email (ends in @tamu.edu)")
+    async def verification(self, interaction: discord.Interaction, name: str, user: discord.Member, email: str) -> None:
+        """ Changes who PTs and faculty contact to get verified """
+
+        if not email.lower().endswith("@tamu.edu"):
+            await reply(interaction, "You must specify an official TAMU email.")
+            return
+
+        await self.bot.db.set_config("verify_name", name)
+        await self.bot.db.set_config("verify_user_id", str(user.id))
+        await self.bot.db.set_config("verify_email", email)
+
+        await reply(interaction, f"PT/faculty verification contact changed to {name} ({user.mention}), email: {email}. "
+                                 f"Re-post the verification prompt with `/post verification` for the change to show.")
+
+    @staticmethod
+    def format_value(guild: discord.Guild | None, key: str, value: str) -> str:
         """ Resolves ID values to mentions where possible so the list is readable """
-        if ctx.guild is None or not value.isdigit():
+        if guild is None or not value.isdigit():
             return value
 
-        if key.startswith("welcome_role"):
-            role = ctx.guild.get_role(int(value))
+        if is_role_key(key):
+            role = guild.get_role(int(value))
             return f"{role.mention} ({value})" if role is not None else f"{value} (role not found!)"
 
         if key.endswith("_channel") or key.endswith("_category"):
-            channel = ctx.guild.get_channel(int(value))
+            channel = guild.get_channel(int(value))
             return f"{channel.mention} ({value})" if channel is not None else f"{value} (channel not found!)"
 
         return value

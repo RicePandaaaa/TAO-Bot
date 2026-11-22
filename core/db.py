@@ -25,21 +25,6 @@ CREATE TABLE IF NOT EXISTS private_rooms (
     student_id INTEGER NOT NULL,
     created_at TEXT NOT NULL
 );
-
-CREATE TABLE IF NOT EXISTS message_stats (
-    channel_id INTEGER NOT NULL,
-    hour_ts    TEXT NOT NULL,
-    dow        INTEGER NOT NULL,
-    hour       INTEGER NOT NULL,
-    count      INTEGER NOT NULL DEFAULT 0,
-    PRIMARY KEY (channel_id, hour_ts)
-);
-
-CREATE TABLE IF NOT EXISTS member_stats (
-    day    TEXT PRIMARY KEY,
-    joins  INTEGER NOT NULL DEFAULT 0,
-    leaves INTEGER NOT NULL DEFAULT 0
-);
 """
 
 # Config keys editable through the config cog. Values are stored as text;
@@ -50,17 +35,28 @@ CONFIG_KEYS = (
     "pt_log_channel",
     "private_category",
     "archive_category",
+    "room_close_role",
     "review_216",
     "review_217",
     "review_102",
 )
 
-# Values seeded on first run so behavior matches the previously hardcoded IDs
+# Values seeded on first run so behavior matches the previously hardcoded IDs.
+# These are IDs from the ENGR TAO server and are only used when a key is missing from the
+# database: change live values with `/config set` (or `/config verification`), not here.
 DEFAULT_CONFIG = {
-    "welcome_role_1": "1147655175209754764",
-    "welcome_role_2": "1147655249784492113",
-    "pt_log_channel": "1022982386557923369",
-    "private_category": "1488619460897280222",
+    # Roles given to every new member (on_member_join in bot.py)
+    "welcome_role_1": "1147655175209754764",    # "Announcements" role: server/TAO club announcement pings
+    "welcome_role_2": "1147655249784492113",    # "Bulletin Board" role: bulletin board channel pings
+
+    "pt_log_channel": "1022982386557923369",    # #bot-log channel: `/pt add` usage is logged here
+    "private_category": "1488619460897280222",  # Category where `/room create` creates private PT/student channels
+    # "archive_category" has no default: set it with `/config set` before `/close`/`/room archive` work
+
+    # PT/faculty verification contact shown in `send_verification_prompt`
+    "verify_name": "Alex",
+    "verify_user_id": "367771798508404736",     # Alex's Discord user ID
+    "verify_email": "alex-gonce@tamu.edu",
 }
 
 
@@ -69,7 +65,7 @@ class Database:
 
     def __init__(self, path: str = "data/tao.db"):
         self.path = path
-        self.conn: aiosqlite.Connection = None  # type: ignore[assignment]
+        self.conn: aiosqlite.Connection = None
 
     async def init(self) -> None:
         """ Opens the connection, creates tables, and runs one-time migrations """
@@ -83,6 +79,7 @@ class Database:
 
         await self._migrate_csvs()
         await self.conn.commit()
+        await self._drop_stats_tables()
 
     async def close(self) -> None:
         if self.conn is not None:
@@ -115,6 +112,20 @@ class Database:
                         "INSERT OR IGNORE INTO professors (class_name, prof_name) VALUES (?, ?)",
                         (class_name, professor))
                     logging.info(f"Migrated professor \"{professor}\" for \"{class_name}\" from CSV")
+
+    async def _drop_stats_tables(self) -> None:
+        """ One-time cleanup: the removed /stats commands kept their data in these tables """
+        async with self.conn.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN ('message_stats', 'member_stats')") as cursor:
+            tables = [row[0] async for row in cursor]
+        if not tables:
+            return
+
+        for table in tables:
+            await self.conn.execute(f"DROP TABLE {table}")
+        await self.conn.commit()
+        await self.conn.execute("VACUUM")  # shrinks the file now that the data is gone
+        logging.info(f"Dropped old stats tables: {', '.join(tables)}")
 
     # ---------- Config ----------
 
@@ -178,63 +189,3 @@ class Database:
     async def remove_room(self, channel_id: int) -> None:
         await self.conn.execute("DELETE FROM private_rooms WHERE channel_id = ?", (channel_id,))
         await self.conn.commit()
-
-    # ---------- Statistics ----------
-
-    async def add_message_counts(self, counts: dict[tuple[int, str], int]) -> None:
-        """ Flushes aggregated message counts, keyed by (channel_id, 'YYYY-MM-DDTHH:00' Central time) """
-        rows = []
-        for (channel_id, hour_ts), count in counts.items():
-            bucket = datetime.fromisoformat(hour_ts)
-            rows.append((channel_id, hour_ts, bucket.weekday(), bucket.hour, count))
-
-        await self.conn.executemany(
-            "INSERT INTO message_stats (channel_id, hour_ts, dow, hour, count) VALUES (?, ?, ?, ?, ?) "
-            "ON CONFLICT(channel_id, hour_ts) DO UPDATE SET count = count + excluded.count",
-            rows)
-        await self.conn.commit()
-
-    async def add_member_event(self, joined: bool) -> None:
-        """ Records a member join or leave for today (Central time) """
-        day = datetime.now(CENTRAL).strftime("%Y-%m-%d")
-        if joined:
-            await self.conn.execute(
-                "INSERT INTO member_stats (day, joins, leaves) VALUES (?, 1, 0) "
-                "ON CONFLICT(day) DO UPDATE SET joins = joins + 1", (day,))
-        else:
-            await self.conn.execute(
-                "INSERT INTO member_stats (day, joins, leaves) VALUES (?, 0, 1) "
-                "ON CONFLICT(day) DO UPDATE SET leaves = leaves + 1", (day,))
-        await self.conn.commit()
-
-    async def messages_per_day(self, since: str, channel_id: int | None = None) -> list[tuple[str, int]]:
-        """ Daily message totals since the given 'YYYY-MM-DD', optionally for one channel """
-        query = "SELECT substr(hour_ts, 1, 10) AS day, SUM(count) FROM message_stats WHERE hour_ts >= ?"
-        params: list = [since]
-        if channel_id is not None:
-            query += " AND channel_id = ?"
-            params.append(channel_id)
-        query += " GROUP BY day ORDER BY day"
-
-        async with self.conn.execute(query, params) as cursor:
-            return [(day, total) async for day, total in cursor]
-
-    async def top_channels(self, since: str, limit: int = 5) -> list[tuple[int, int]]:
-        """ The busiest channels since the given 'YYYY-MM-DD' """
-        async with self.conn.execute(
-                "SELECT channel_id, SUM(count) AS total FROM message_stats WHERE hour_ts >= ? "
-                "GROUP BY channel_id ORDER BY total DESC LIMIT ?", (since, limit)) as cursor:
-            return [(channel_id, total) async for channel_id, total in cursor]
-
-    async def heatmap_counts(self, since: str) -> list[tuple[int, int, int]]:
-        """ (dow, hour, total) triples since the given 'YYYY-MM-DD' """
-        async with self.conn.execute(
-                "SELECT dow, hour, SUM(count) FROM message_stats WHERE hour_ts >= ? GROUP BY dow, hour",
-                (since,)) as cursor:
-            return [(dow, hour, total) async for dow, hour, total in cursor]
-
-    async def member_events_per_day(self, since: str) -> list[tuple[str, int, int]]:
-        """ (day, joins, leaves) rows since the given 'YYYY-MM-DD' """
-        async with self.conn.execute(
-                "SELECT day, joins, leaves FROM member_stats WHERE day >= ? ORDER BY day", (since,)) as cursor:
-            return [(day, joins, leaves) async for day, joins, leaves in cursor]

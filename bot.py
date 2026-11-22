@@ -1,8 +1,9 @@
 import asyncio, os, discord, logging
 from discord.ext import commands
 
-from db import Database
-from DiscordSelect import AnnouncementsButton, ReviewButton, StudentSelect, ProfSelect
+from core.checks import on_app_command_error
+from core.db import Database
+from views.role_menus import AnnouncementsButton, PingsSelect, ProfSelect, PronounsSelect, ReviewButton, StudentSelect
 
 # Remove this once the bot is deployed
 from dotenv import load_dotenv
@@ -18,14 +19,17 @@ logging.basicConfig(level=logging.INFO)
 
 class TAOBot(commands.Bot):
     def __init__(self):
-        super().__init__(intents=intents, command_prefix="tao.", activity=discord.Game(name="tao.help"))
+        super().__init__(intents=intents, command_prefix="tao.", activity=discord.Game(name="Serving first-year engineering!"))
         self.db = Database()
 
     async def setup_hook(self):
         await self.db.init()
 
         # Buttons/selects survive restarts: their state lives in their custom_ids
-        self.add_dynamic_items(AnnouncementsButton, ReviewButton, StudentSelect, ProfSelect)
+        self.add_dynamic_items(StudentSelect, ProfSelect, PronounsSelect, PingsSelect, AnnouncementsButton, ReviewButton)
+
+        # Slash command failures (missing roles, crashes) get a readable reply
+        self.tree.on_error = on_app_command_error
 
         for filename in os.listdir("./cogs"):
             if filename.endswith(".py"):

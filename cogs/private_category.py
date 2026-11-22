@@ -1,115 +1,93 @@
 import discord
 from datetime import datetime, timezone
 from zoneinfo import ZoneInfo
+from discord import app_commands
 from discord.ext import commands
-from discord.ext.commands import Context
+
+from core.checks import is_officer, is_staff
+from core.utils import reply
+
+# Rooms with no messages for this many days are archived by /room archive
+INACTIVE_DAYS = 7
 
 
 class PrivateCategory(commands.Cog):
+    """ Private rooms for one-on-one help between a PT and a student """
+
+    room = app_commands.Group(name="room", description="Private rooms for one-on-one help with a PT",
+                              guild_only=True, extras={"audience": "staff"})
 
     def __init__(self, bot):
         self.bot = bot
 
     async def get_category(self, guild: discord.Guild, key: str) -> discord.CategoryChannel | None:
         """ Looks up a category from config ("private_category" or "archive_category") """
+
+        # Check for category within the database
         category_id = await self.bot.db.get_config_id(key)
         if category_id is None:
             return None
 
+        # Ensure retrieved ID is actually of a category
         category = guild.get_channel(category_id)
         return category if isinstance(category, discord.CategoryChannel) else None
 
-    @commands.hybrid_command()
-    @commands.has_any_role("PT")
-    async def room(self, ctx: Context,
-                   user: discord.Member = commands.parameter(description="The user to create a private room for")) -> None:
-        """ Creates a private channel in the designated category for the given user """
+    async def archive_channel(self, channel: discord.TextChannel, archive_category: discord.CategoryChannel) -> None:
+        """ Locks a private room for everyone, moves it to the archive, and forgets it in the database """
+        overwrites = channel.overwrites
+        for target in overwrites:
+            overwrites[target].send_messages = False
+        overwrites[channel.guild.default_role] = discord.PermissionOverwrite(view_channel=False, send_messages=False)
 
-        await ctx.defer(ephemeral=True)
+        await channel.edit(overwrites=overwrites, category=archive_category)
+        await self.bot.db.remove_room(channel.id)
 
-        if ctx.guild is None:
-            await ctx.send("This command can only be used in a server.", ephemeral=True)
-            return
+    @room.command(name="create")
+    @is_staff()
+    @app_commands.describe(user="The student to create a private room for")
+    async def create(self, interaction: discord.Interaction, user: discord.Member) -> None:
+        """ Creates a private channel for you and a student """
+        assert interaction.guild is not None
 
-        category = await self.get_category(ctx.guild, "private_category")
+        # Allows the interaction response window to be extended due to length of execution of command
+        await interaction.response.defer(ephemeral=True, thinking=True)
+
+        # Ensure the private channel category exists
+        category = await self.get_category(interaction.guild, "private_category")
         if category is None:
-            await ctx.send("Could not find the private category. Set it with `config_set private_category <ID>`.", ephemeral=True)
+            await reply(interaction, "Could not find the private category. Set it with `/config set private_category <ID>`.")
             return
 
-        overwrites = {
-            ctx.guild.default_role: discord.PermissionOverwrite(view_channel=False),
-            user: discord.PermissionOverwrite(view_channel=True, send_messages=True),
-        }
+        # Absorb category permissions before ensuring regular users cannot see this room
+        overwrites = category.overwrites
+        overwrites[interaction.guild.default_role] = discord.PermissionOverwrite(view_channel=False)
+        overwrites[user] = discord.PermissionOverwrite(view_channel=True, send_messages=True)
 
+        # Format channel name based on date and time
         now = datetime.now(ZoneInfo("America/Chicago"))
         date_str = now.strftime("%b%d%y-%H%M").lower()  # e.g. mar3126-1453
         channel_name = f"{user.display_name.lower().replace(' ', '-')}-{date_str}"
         channel = await category.create_text_channel(name=channel_name, overwrites=overwrites)
         await self.bot.db.add_room(channel.id, user.id)
 
-        await ctx.send(f"Created private room {channel.mention} for {user.mention}.", ephemeral=True)
+        await reply(interaction, f"Created private room {channel.mention} for {user.mention}.")
 
+    @room.command(name="archive", extras={"audience": "officer"})
+    @is_officer()
+    async def archive(self, interaction: discord.Interaction) -> None:
+        """ Locks and archives every private room with no messages in the last 7 days """
+        assert interaction.guild is not None
 
-    @commands.hybrid_command()
-    async def close(self, ctx: Context) -> None:
-        """ Closes this private channel (student only): locks it and moves it to the archive """
+        await interaction.response.defer(ephemeral=True, thinking=True)
 
-        await ctx.defer(ephemeral=True)
-
-        if ctx.guild is None:
-            await ctx.send("This command can only be used in a server.", ephemeral=True)
-            return
-
-        if not isinstance(ctx.channel, discord.TextChannel):
-            await ctx.send("This command can only be used in a text channel.", ephemeral=True)
-            return
-
-        channel = ctx.channel
-        student_id = await self.bot.db.get_room_student(channel.id)
-
-        if student_id is None:
-            await ctx.send("This command can only be used in a private room.", ephemeral=True)
-            return
-
-        if ctx.author.id != student_id:
-            await ctx.send("Only the student this room was created for can close it.", ephemeral=True)
-            return
-
-        archive_category = await self.get_category(ctx.guild, "archive_category")
-        if archive_category is None:
-            await ctx.send("Could not find the archive category.", ephemeral=True)
-            return
-
-        # Lock the channel for everyone, then move to archive
-        overwrites = channel.overwrites
-        for target in overwrites:
-            overwrites[target].send_messages = False
-        overwrites[ctx.guild.default_role] = discord.PermissionOverwrite(view_channel=False, send_messages=False)
-
-        await channel.edit(overwrites=overwrites, category=archive_category)
-        await self.bot.db.remove_room(channel.id)
-
-        await ctx.send("This room has been closed and archived.", ephemeral=True)
-
-    @commands.hybrid_command()
-    @commands.has_any_role("TAO Officer")
-    async def archive_rooms(self, ctx: Context) -> None:
-        """ Moves private channels inactive for 7+ days into the archive category """
-
-        await ctx.defer(ephemeral=True)
-
-        if ctx.guild is None:
-            await ctx.send("This command can only be used in a server.", ephemeral=True)
-            return
-
-        private_category = await self.get_category(ctx.guild, "private_category")
+        private_category = await self.get_category(interaction.guild, "private_category")
         if private_category is None:
-            await ctx.send("Could not find the private category", ephemeral=True)
+            await reply(interaction, "Could not find the private category.")
             return
 
-        archive_category = await self.get_category(ctx.guild, "archive_category")
+        archive_category = await self.get_category(interaction.guild, "archive_category")
         if archive_category is None:
-            await ctx.send("Could not find the archive category", ephemeral=True)
+            await reply(interaction, "Could not find the archive category. Set it with `/config set archive_category <ID>`.")
             return
 
         now = datetime.now(timezone.utc)
@@ -118,20 +96,59 @@ class PrivateCategory(commands.Cog):
         for channel in private_category.text_channels:
             last_message = channel.last_message_id
 
-            # No messages ever sent — use channel creation time
+            # Use channel creation time if no messages exist
             if last_message is None:
                 last_activity = channel.created_at
             else:
                 last_activity = discord.utils.snowflake_time(last_message)
 
-            if (now - last_activity).days >= 7:
-                await channel.edit(category=archive_category)
+            if (now - last_activity).days >= INACTIVE_DAYS:
+                await self.archive_channel(channel, archive_category)
                 archived.append(channel.mention)
 
         if archived:
-            await ctx.send(f"Archived {len(archived)} channel(s): {', '.join(archived)}.", ephemeral=True)
+            await reply(interaction, f"Archived {len(archived)} channel(s): {', '.join(archived)}.")
         else:
-            await ctx.send("No channels were inactive long enough to archive.", ephemeral=True)
+            await reply(interaction, "No channels were inactive long enough to archive.")
+
+    @app_commands.command(name="close", extras={"audience": "everyone"})
+    @app_commands.guild_only()
+    async def close(self, interaction: discord.Interaction) -> None:
+        """ Closes the private room you're in: locks it and moves it to the archive """
+        assert interaction.guild is not None
+
+        # Allows the interaction response window to be extended due to length of execution of command
+        await interaction.response.defer(ephemeral=True, thinking=True)
+
+        if not isinstance(interaction.channel, discord.TextChannel):
+            await reply(interaction, "This command can only be used in a text channel.")
+            return
+
+        # Ensure the channel in which the command is invoked is valid
+        channel = interaction.channel
+        student_id = await self.bot.db.get_room_student(channel.id)
+
+        if student_id is None:
+            await reply(interaction, "This command can only be used in a private room.")
+            return
+
+        # Besides the student, members with the configured staff role may close the room
+        close_role_id = await self.bot.db.get_config_id("room_close_role")
+        has_close_role = (close_role_id is not None and isinstance(interaction.user, discord.Member)
+                          and interaction.user.get_role(close_role_id) is not None)
+
+        if interaction.user.id != student_id and not has_close_role:
+            await reply(interaction, "Only the student this room was created for (or staff) can close it.")
+            return
+
+        archive_category = await self.get_category(interaction.guild, "archive_category")
+        if archive_category is None:
+            await reply(interaction, "Could not find the archive category.")
+            return
+
+        await self.archive_channel(channel, archive_category)
+
+        await reply(interaction, "This room has been closed and archived.")
 
 
 async def setup(bot):

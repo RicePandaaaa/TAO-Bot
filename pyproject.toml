@@ -8,6 +8,5 @@ dependencies = [
     "aiosqlite>=0.22.1",
     "discord-py>=2.7.1",
     "dotenv>=0.9.9",
-    "matplotlib>=3.11.0",
     "tzdata>=2026.3",
 ]
