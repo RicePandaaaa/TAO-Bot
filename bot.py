@@ -19,7 +19,7 @@ logging.basicConfig(level=logging.INFO)
 
 class TAOBot(commands.Bot):
     def __init__(self):
-        super().__init__(intents=intents, command_prefix="tao_test.", activity=discord.Game(name="testing!"))
+        super().__init__(intents=intents, command_prefix="tao.", activity=discord.Game(name="Serving first-year engineering!"))
         self.db = Database()
 
     async def setup_hook(self):
