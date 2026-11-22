@@ -3,8 +3,8 @@ from discord import app_commands
 from discord.app_commands import Choice
 from discord.ext import commands
 
-from checks import STAFF_ROLES, has_any_role_named
-from utils import link_embed
+from core.checks import STAFF_ROLES, has_any_role_named
+from core.utils import link_embed
 
 
 class Resources(commands.Cog):

@@ -5,10 +5,10 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from checks import OFFICER_PERMISSIONS, is_officer
-from DiscordSelect import (COURSES, OFF_CAMPUS, PROF_PROMPT, Course, ProfSelect, class_role_key, menu_order,
+from core.checks import OFFICER_PERMISSIONS, is_officer
+from views.role_menus import (COURSES, OFF_CAMPUS, PROF_PROMPT, Course, ProfSelect, class_role_key, menu_order,
                            professor_role_name)
-from utils import reply
+from core.utils import reply
 
 # Discord's limits for forum channel tags
 MAX_FORUM_TAGS = 20

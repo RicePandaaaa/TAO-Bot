@@ -4,8 +4,8 @@ from zoneinfo import ZoneInfo
 from discord import app_commands
 from discord.ext import commands
 
-from checks import is_officer, is_staff
-from utils import reply
+from core.checks import is_officer, is_staff
+from core.utils import reply
 
 # Rooms with no messages for this many days are archived by /room archive
 INACTIVE_DAYS = 7

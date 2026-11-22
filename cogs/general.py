@@ -5,7 +5,7 @@ from discord import app_commands
 from discord.ext import commands
 from discord.ext.commands import Context, Greedy
 
-from checks import OFFICER_ROLE, audience_of
+from core.checks import OFFICER_ROLE, audience_of
 
 # Sections of /help, in order, keyed by the `audience` set in each command's extras
 HELP_SECTIONS = {

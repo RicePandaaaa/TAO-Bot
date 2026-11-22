@@ -1,9 +1,9 @@
 import asyncio, os, discord, logging
 from discord.ext import commands
 
-from checks import on_app_command_error
-from db import Database
-from DiscordSelect import AnnouncementsButton, PingsSelect, ProfSelect, PronounsSelect, ReviewButton, StudentSelect
+from core.checks import on_app_command_error
+from core.db import Database
+from views.role_menus import AnnouncementsButton, PingsSelect, ProfSelect, PronounsSelect, ReviewButton, StudentSelect
 
 # Remove this once the bot is deployed
 from dotenv import load_dotenv

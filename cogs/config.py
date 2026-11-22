@@ -4,9 +4,9 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from checks import OFFICER_PERMISSIONS, is_officer
-from db import CONFIG_KEYS
-from utils import reply
+from core.checks import OFFICER_PERMISSIONS, is_officer
+from core.db import CONFIG_KEYS
+from core.utils import reply
 
 ConfigKey = typing.Literal[
     "welcome_role_1",

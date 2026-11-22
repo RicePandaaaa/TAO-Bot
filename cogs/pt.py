@@ -4,8 +4,8 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from checks import OFFICER_PERMISSIONS, PT_ROLE, is_officer
-from utils import reply
+from core.checks import OFFICER_PERMISSIONS, PT_ROLE, is_officer
+from core.utils import reply
 from views.confirm import ConfirmView
 
 MAX_NICKNAME_LENGTH = 32

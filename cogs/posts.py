@@ -2,9 +2,9 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from checks import OFFICER_PERMISSIONS, is_officer
-from DiscordSelect import PINGS, PRONOUN_ROLES_KEY, PingsSelect, PronounsSelect, StudentSelect
-from utils import link_embed, reply
+from core.checks import OFFICER_PERMISSIONS, is_officer
+from views.role_menus import PINGS, PRONOUN_ROLES_KEY, PingsSelect, PronounsSelect, StudentSelect
+from core.utils import link_embed, reply
 
 
 async def post_in_channel(interaction: discord.Interaction, content: str | None = None, **kwargs) -> None:
