@@ -1,3 +1,5 @@
+import logging
+
 import discord
 from discord import app_commands
 from discord.ext import commands
@@ -5,6 +7,13 @@ from discord.ext import commands
 from core.checks import OFFICER_PERMISSIONS, is_officer
 from views.role_menus import PINGS, PRONOUN_ROLES_KEY, PingsSelect, PronounsSelect, StudentSelect
 from core.utils import link_embed, reply
+
+DEFAULT_AGREE_EMOJI = "✅"
+
+
+def same_emoji(a: str, b: str) -> bool:
+    """ Compares emojis, ignoring the invisible variation selector some keyboards add (✅ vs ✅️) """
+    return a.replace("\ufe0f", "") == b.replace("\ufe0f", "")
 
 
 async def post_in_channel(interaction: discord.Interaction, content: str | None = None, **kwargs) -> None:
@@ -23,6 +32,108 @@ class Posts(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        # (message ID, role ID, emoji) of the current /post agree message, so reactions don't hit the database
+        self.rules: tuple[int, int, str] | None = None
+
+    async def cog_load(self) -> None:
+        message_id = await self.bot.db.get_config_id("rules_message_id")
+        role_id = await self.bot.db.get_config_id("rules_role")
+        emoji = await self.bot.db.get_config("rules_emoji")
+        if message_id is not None and role_id is not None and emoji:
+            self.rules = (message_id, role_id, emoji)
+
+    # ---------- Agree to the rules ----------
+
+    @post.command(name="agree")
+    @is_officer()
+    @app_commands.describe(message="The sentence to post, e.g. \"React below to agree to the rules and unlock the server!\"",
+                           role="Role members get by reacting (give it access to the server's channels)",
+                           emoji=f"Emoji members react with (default {DEFAULT_AGREE_EMOJI})")
+    async def agree(self, interaction: discord.Interaction, message: str, role: discord.Role,
+                    emoji: str = DEFAULT_AGREE_EMOJI) -> None:
+        """ Posts a message members react to, to agree to the rules and get a role that unlocks the server """
+        emoji = emoji.strip()
+
+        # Ensure role can be assigned
+        if not role.is_assignable():
+            await reply(interaction, f"I can't give out {role.mention}. It has to be below my highest role "
+                                     f"and can't be @everyone or a bot/integration role.")
+            return
+
+        # Check that emote exists natively
+        partial = discord.PartialEmoji.from_str(emoji)
+        if partial.id is not None and self.bot.get_emoji(partial.id) is None:
+            await reply(interaction, f"I can't use {emoji}. Custom emojis have to be from this server.")
+            return
+
+        # Send message out
+        await post_in_channel(interaction, message)
+        posted = await interaction.original_response()
+
+        try:
+            await posted.add_reaction(emoji)
+        except discord.HTTPException:
+            # If the emoji reaction fails, then take down the message and alert user
+            await posted.delete()
+            await interaction.followup.send(f"\"{emoji}\" isn't an emoji I can react with, so I took the message back down. "
+                                            f"Try again with a standard emoji or one from this server.", ephemeral=True)
+            return
+
+        # Set the rule info
+        old_message_id = self.rules[0] if self.rules is not None else None
+        self.rules = (posted.id, role.id, emoji)
+        await self.bot.db.set_config("rules_message_id", str(posted.id))
+        await self.bot.db.set_config("rules_role", str(role.id))
+        await self.bot.db.set_config("rules_emoji", emoji)
+
+        note = (f"Reacting with {emoji} gives {role.mention}, and removing the reaction takes it away. "
+                f"Make sure {role.mention} is what lets members see the server's channels.")
+
+        # Double check that the message is valid
+        if old_message_id is not None and old_message_id != posted.id:
+            note += ("\nThe previous agree message no longer gives the role, so you can delete it. "
+                     "Members who already agreed keep the role.")
+        await interaction.followup.send(note, ephemeral=True, allowed_mentions=discord.AllowedMentions.none())
+
+    def rules_role_for(self, payload: discord.RawReactionActionEvent) -> discord.Role | None:
+        """ The role to give/take for this reaction, or None if it isn't the agree reaction on the rules """
+        if self.rules is None or payload.guild_id is None:
+            return None
+        message_id, role_id, emoji = self.rules
+        if payload.message_id != message_id or not same_emoji(str(payload.emoji), emoji):
+            return None
+        if self.bot.user is not None and payload.user_id == self.bot.user.id:
+            return None
+
+        guild = self.bot.get_guild(payload.guild_id)
+        return guild.get_role(role_id) if guild is not None else None
+
+    # Raw events, since the rules message usually isn't in the bot's cache after a restart
+    @commands.Cog.listener()
+    async def on_raw_reaction_add(self, payload: discord.RawReactionActionEvent) -> None:
+        role = self.rules_role_for(payload)
+        member = payload.member
+        if role is None or member is None or member.bot or role in member.roles:
+            return
+        try:
+            await member.add_roles(role, reason="Agreed to the rules")
+        except discord.HTTPException as error:
+            logging.warning(f"Couldn't give {member} the rules role: {error}")
+
+    @commands.Cog.listener()
+    async def on_raw_reaction_remove(self, payload: discord.RawReactionActionEvent) -> None:
+        role = self.rules_role_for(payload)
+        if role is None:
+            return
+        member = role.guild.get_member(payload.user_id)
+        if member is None or role not in member.roles:
+            return
+        try:
+            await member.remove_roles(role, reason="Removed their rules reaction")
+        except discord.HTTPException as error:
+            logging.warning(f"Couldn't remove the rules role from {member}: {error}")
+
+    # ---------- Role menus and info prompts ----------
 
     @post.command(name="welcome")
     @is_officer()
@@ -38,9 +149,7 @@ class Posts(commands.Cog):
         view.add_item(StudentSelect([doing_etam.id, done_with_etam.id, visiting.id, alumni.id]))
 
         await post_in_channel(interaction,
-                              "Welcome to the TAO server! If you have not already, please **read the newcomer tips at "
-                              "<#1144274416965013565> and the server guidelines at <#1023087608928153681>**. Also, please select what type of student you are "
-                              "(you can change this later by picking a different option).", view=view)
+                              "Welcome to the TAO server! Please continue looking through the roles below!", view=view)
 
     @post.command(name="pronouns")
     @is_officer()
